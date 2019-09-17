@@ -27,14 +27,14 @@ namespace TaskServer
 
         public TaskServer()
         {
-            clients = new CliServLib.ClientStore(ReceiveData);
+            clients = new CliServLib.ClientStore();
             listenerThread.Run(clients);
         }
 
-        public void ReceiveData(MessageData data)
-        {
-            Console.WriteLine("Received Message of Type: {0}", data.id);
-        }
+        //public void ReceiveData(MessageData data)
+        //{
+        //    Console.WriteLine("Received Message of Type: {0}", data.id);
+        //}
 
         public bool ServerIsDone
         {

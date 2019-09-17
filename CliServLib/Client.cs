@@ -94,5 +94,10 @@ namespace CliServLib
             return controller.ClientData().Data;
         }
 
+        public void SetData(object data)
+        {
+            controller.Sender.DataGetter.SetData(data);
+        }
+
     }
 }

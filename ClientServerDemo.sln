@@ -23,6 +23,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskClient", "TaskClient\Ta
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CliServLib", "CliServLib\CliServLib.csproj", "{A6C36C44-694E-4F46-8E58-ED6D2737A346}"
+	ProjectSection(ProjectDependencies) = postProject
+		{32C9300F-B915-4ABB-AC59-332EDE767F01} = {32C9300F-B915-4ABB-AC59-332EDE767F01}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -12,12 +12,12 @@ namespace CliServLib
     {
         private static readonly Dictionary<long, Client> clientStore = new Dictionary<long, Client>();
 
-        public static Action<MessageData> MessageAction;
+        //public static Action<MessageData> MessageAction;
 
-        public ClientStore(Action<MessageData> action)
-        {
-            MessageAction = action;
-        }
+        //public ClientStore(Action<MessageData> action)
+        //{
+        //    MessageAction = action;
+        //}
 
         public static void AddClient(Client client, long handle)
         {
@@ -106,10 +106,10 @@ namespace CliServLib
                 {
                     Console.WriteLine("[{0}]: {1}", message.name, message.message);
                 }
-                if (MessageAction != null)
-                {
-                    MessageAction.Invoke(message);
-                }
+                //if (MessageAction != null)
+                //{
+                //    MessageAction.Invoke(message);
+                //}
             }
             //}
         }

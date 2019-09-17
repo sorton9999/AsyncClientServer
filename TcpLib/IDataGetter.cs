@@ -8,6 +8,8 @@ namespace TcpLib
 {
     public interface IDataGetter
     {
-        MessageData GetData(int msgType);
+        MessageData GetData();
+        MessageData GetData(long msgType);
+        void SetData(object data);
     }
 }

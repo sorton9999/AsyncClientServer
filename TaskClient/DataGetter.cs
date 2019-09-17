@@ -9,12 +9,28 @@ namespace TaskClient
 {
     public class DataGetter : IDataGetter
     {
-        public MessageData GetData(int msgType)
+        public MessageData GetData()
         {
             MessageData messageData = new MessageData();
             string message = Console.ReadLine();
             messageData.message = message;
+            messageData.id = 1;
             return messageData;
+        }
+
+        public MessageData GetData(long handle)
+        {
+            MessageData messageData = new MessageData();
+            string message = Console.ReadLine();
+            messageData.message = message;
+            messageData.id = 1;
+            messageData.handle = handle;
+            return messageData;
+        }
+
+        public void SetData(object data)
+        {
+
         }
     }
 }

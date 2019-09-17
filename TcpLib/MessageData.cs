@@ -10,6 +10,7 @@ namespace TcpLib
     public class MessageData
     {
         public int id;
+        public long handle;
         public string name;
         public object message;
     }

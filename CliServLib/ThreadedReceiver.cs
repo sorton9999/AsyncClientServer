@@ -13,7 +13,7 @@ namespace CliServLib
 {
     public class ThreadedReceiver : ThreadedBase, IReceive
     {
-        public event AsyncCompletedEventHandler DataReceived;
+        public static event AsyncCompletedEventHandler DataReceived;
         protected virtual void OnDataReceived(AsyncCompletedEventArgs e)
         {
             DataReceived?.Invoke(this, e);
@@ -41,6 +41,8 @@ namespace CliServLib
 
             if ((client != null) && (client.ClientSocket != null))
             {
+                ReceiveData rcvData = new ReceiveData();
+
                 while (!looper.LoopDone)
                 {
                     // Clear out buffer before receiving new data
@@ -56,8 +58,10 @@ namespace CliServLib
                     try
                     {
                         var value = ClientData<MessageData>.DeserializeFromByteArray<MessageData>(client.ClientData());
+                        rcvData.clientData = value;
+                        rcvData.clientHandle = (long)client.ClientSocket.Handle;
                         //value.bytesReceived = res.Result.Value;
-                        OnDataReceived(new AsyncCompletedEventArgs(null, false, value));
+                        OnDataReceived(new AsyncCompletedEventArgs(null, false, rcvData));
                         //Console.WriteLine("Client [{0}]: {1}", (long)client.ClientSocket.Handle, message);
                     }
                     catch (Exception e)
@@ -68,5 +72,11 @@ namespace CliServLib
                 Console.WriteLine("Receive Loop Exiting...");
             }
         }
+    }
+
+    public class ReceiveData
+    {
+        public long clientHandle;
+        public MessageData clientData;
     }
 }

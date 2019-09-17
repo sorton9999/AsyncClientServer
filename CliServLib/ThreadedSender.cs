@@ -38,6 +38,12 @@ namespace CliServLib
             private set { theThread = value; }
         }
 
+        public IDataGetter DataGetter
+        {
+            get { return dataGetter; }
+            private set { dataGetter = value; }
+        }
+
         public Result ResultLoop(object arg)
         {
             Result response = Result.Ok();
@@ -54,17 +60,20 @@ namespace CliServLib
                 {
                     try
                     {
-                        var eventData = GetDataAsync.GetMessageDataAsync(dataGetter, 0);
+                        var eventData = GetDataAsync.GetMessageDataAsync(dataGetter, client.ClientHandle);
 
                         if (eventData != null)
                         {
-                            byte[] buffer = ClientData<MessageData>.SerializeToByteArray<MessageData>(eventData.Result);
-                            var res = TcpLibExtensions.SendBufferAsync(client.ClientSocket, buffer, 0, buffer.Length, SocketFlags.None);
-                            if (res.IsFaulted || (res.Result == null) || res.Result.Failure)
+                            if ((eventData.Result.id > 0) && (eventData.Result.message != null))
                             {
-                                // Just close the socket.  Look into trying to reconnect
-                                Console.WriteLine("Send Fault. Closing socket {0} to client.", client.ClientSocket.Handle);
-                                ClientStore.RemoveClient((long)client.ClientSocket.Handle);
+                                byte[] buffer = ClientData<MessageData>.SerializeToByteArray<MessageData>(eventData.Result);
+                                var res = TcpLibExtensions.SendBufferAsync(client.ClientSocket, buffer, 0, buffer.Length, SocketFlags.None);
+                                if (res.IsFaulted || (res.Result == null) || res.Result.Failure)
+                                {
+                                    // Just close the socket.  Look into trying to reconnect
+                                    Console.WriteLine("Send Fault. Closing socket {0} to client.", client.ClientSocket.Handle);
+                                    ClientStore.RemoveClient((long)client.ClientSocket.Handle);
+                                }
                             }
 
                             // Data sent.  Clear out buffer

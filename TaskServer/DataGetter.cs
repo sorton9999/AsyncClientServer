@@ -9,7 +9,18 @@ namespace TaskServer
 {
     public class DataGetter : IDataGetter
     {
-        public MessageData GetData(int msgType)
+        public MessageData GetData()
+        { 
+            throw new NotImplementedException("Implement me when adding send capabilities.");
+
+        }
+
+        public MessageData GetData(long msgType)
+        {
+            throw new NotImplementedException("Implement me when adding send capabilities.");
+        }
+
+        public void SetData(object data)
         {
             throw new NotImplementedException("Implement me when adding send capabilities.");
         }
