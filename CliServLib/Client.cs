@@ -50,6 +50,16 @@ namespace CliServLib
             set { controller.ClientData().DataSize = value; }
         }
 
+        public ThreadedReceiver Receiver
+        {
+            get { return controller.Receiver; }
+        }
+
+        public ThreadedSender Sender
+        {
+            get { return controller.Sender; }
+        }
+
         public void Dispose()
         {
             Console.WriteLine("Disposing Controller for Client " + ClientSocket.Handle);

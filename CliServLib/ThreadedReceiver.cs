@@ -13,10 +13,33 @@ namespace CliServLib
 {
     public class ThreadedReceiver : ThreadedBase, IReceive
     {
-        public static event AsyncCompletedEventHandler DataReceived;
-        protected virtual void OnDataReceived(AsyncCompletedEventArgs e)
+        /// <summary>
+        /// The server data received parses out msgs by client ID so it can be static
+        /// </summary>
+        public static event AsyncCompletedEventHandler ServerDataReceived;
+
+        /// <summary>
+        /// This is a non-static client data received event so it can be a new copy
+        /// for each client
+        /// </summary>
+        public event AsyncCompletedEventHandler ClientDataReceived;
+
+        /// <summary>
+        /// The server's data receive event caller.
+        /// </summary>
+        /// <param name="e">Asynchronous event args</param>
+        protected virtual void OnServerDataReceived(AsyncCompletedEventArgs e)
         {
-            DataReceived?.Invoke(this, e);
+            ServerDataReceived?.Invoke(this, e);
+        }
+
+        /// <summary>
+        /// The client's data receive event caller
+        /// </summary>
+        /// <param name="e">Asynchronous event args</param>
+        protected virtual void OnClientDataReceived(AsyncCompletedEventArgs e)
+        {
+            ClientDataReceived?.Invoke(this, e);
         }
         
         public ThreadedReceiver()
@@ -60,9 +83,18 @@ namespace CliServLib
                         var value = ClientData<MessageData>.DeserializeFromByteArray<MessageData>(client.ClientData());
                         rcvData.clientData = value;
                         rcvData.clientHandle = (long)client.ClientSocket.Handle;
-                        //value.bytesReceived = res.Result.Value;
-                        OnDataReceived(new AsyncCompletedEventArgs(null, false, rcvData));
-                        //Console.WriteLine("Client [{0}]: {1}", (long)client.ClientSocket.Handle, message);
+
+                        // This indicates a response from the server to a client of which there could be many
+                        if (value.response)
+                        {
+                            // Client received
+                            OnClientDataReceived(new AsyncCompletedEventArgs(null, false, rcvData));
+                        }
+                        else
+                        {
+                            // Server received
+                            OnServerDataReceived(new AsyncCompletedEventArgs(null, false, rcvData));
+                        }
                     }
                     catch (Exception e)
                     {
