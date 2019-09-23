@@ -29,6 +29,11 @@ namespace TcpLib
             return new Result(true, string.Empty);
         }
 
+        public static Result Fail()
+        {
+            return new Result(false, string.Empty);
+        }
+
         public static Result<T> Ok<T>(T value)
         {
             return new Result<T>(value, true, string.Empty);

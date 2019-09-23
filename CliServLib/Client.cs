@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using TcpLib;
 
@@ -14,6 +15,7 @@ namespace CliServLib
 
         Socket clientSocket = null;
         ServiceController<MessageData> controller = null;
+        CancellationTokenSource cancelSource = new CancellationTokenSource();
 
 
         public Client(Socket socket, int dataSize)
@@ -60,6 +62,12 @@ namespace CliServLib
             get { return controller.Sender; }
         }
 
+        public CancellationTokenSource CancelSource
+        {
+            get { return cancelSource; }
+            set { cancelSource = value; }
+        }
+
         public void Dispose()
         {
             Console.WriteLine("Disposing Controller for Client " + ClientSocket.Handle);
@@ -91,6 +99,7 @@ namespace CliServLib
 
         public bool Stop()
         {
+            CancelSource.Cancel();
             return controller.StopController();
         }
 

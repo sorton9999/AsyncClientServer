@@ -71,34 +71,37 @@ namespace CliServLib
                     // Clear out buffer before receiving new data
                     client.ClearData();
 
-                    var res = TcpLibExtensions.ReceiveAsync(client.ClientSocket, client.ClientData(), 0, client.DataSize, SocketFlags.None);
+                    var res = TcpLibExtensions.ReceiveAsync(client.ClientSocket, client.ClientData(), 0, client.DataSize, SocketFlags.None, client.CancelSource.Token);
                     if (res.IsFaulted || (res.Result == null) || res.Result.Failure)
                     {
                         // Just close the socket.  Look into trying to reconnect
                         Console.WriteLine("Receive Fault. Closing socket {0} to client.", client.ClientSocket.Handle);
                         ClientStore.RemoveClient((long)client.ClientSocket.Handle);
                     }
-                    try
+                    else
                     {
-                        var value = ClientData<MessageData>.DeserializeFromByteArray<MessageData>(client.ClientData());
-                        rcvData.clientData = value;
-                        rcvData.clientHandle = (long)client.ClientSocket.Handle;
+                        try
+                        {
+                            var value = ClientData<MessageData>.DeserializeFromByteArray<MessageData>(client.ClientData());
+                            rcvData.clientData = value;
+                            rcvData.clientHandle = (long)client.ClientSocket.Handle;
 
-                        // This indicates a response from the server to a client of which there could be many
-                        if (value.response)
-                        {
-                            // Client received
-                            OnClientDataReceived(new AsyncCompletedEventArgs(null, false, rcvData));
+                            // This indicates a response from the server to a client of which there could be many
+                            if (value.response)
+                            {
+                                // Client received
+                                OnClientDataReceived(new AsyncCompletedEventArgs(null, false, rcvData));
+                            }
+                            else
+                            {
+                                // Server received
+                                OnServerDataReceived(new AsyncCompletedEventArgs(null, false, rcvData));
+                            }
                         }
-                        else
+                        catch (Exception e)
                         {
-                            // Server received
-                            OnServerDataReceived(new AsyncCompletedEventArgs(null, false, rcvData));
+                            Console.WriteLine(e.Message);
                         }
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e.Message);
                     }
                 }
                 Console.WriteLine("Receive Loop Exiting...");

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace TcpLib
@@ -12,7 +13,8 @@ namespace TcpLib
             byte[] buffer,
             int offset,
             int size,
-            SocketFlags socketFlags)
+            SocketFlags socketFlags,
+            CancellationToken cancelToken)
         {
             int bytesReceived = 0;
             try
@@ -22,6 +24,11 @@ namespace TcpLib
                     {
                         try
                         {
+                            if (cancelToken.IsCancellationRequested)
+                            {
+                                throw new TaskCanceledException(new Task<Result>(Result.Fail));
+                            }
+                            cancelToken.ThrowIfCancellationRequested();
                             return socket.EndReceive(s);
                         }
                         catch (Exception e)
@@ -30,6 +37,7 @@ namespace TcpLib
                             return -1;
                         }
                     })
+
                     .ConfigureAwait(false);
             }
             catch (SocketException ex)

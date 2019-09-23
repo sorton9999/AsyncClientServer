@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace TcpLib
@@ -14,7 +15,8 @@ namespace TcpLib
             byte[] buffer,
             int offset,
             int count,
-            SocketFlags flags)
+            SocketFlags flags,
+            CancellationToken cancelToken)
         {
             int bytesSent = 0;
             try
@@ -24,6 +26,12 @@ namespace TcpLib
                     {
                         try
                         {
+                            if (cancelToken.IsCancellationRequested)
+                            {
+                                Task<Result> res = new Task<Result>(Result.Fail);
+                                throw new TaskCanceledException(res);
+                            }
+                            cancelToken.ThrowIfCancellationRequested();
                             return socket.EndSend(s);
                         }
                         catch (Exception e)
