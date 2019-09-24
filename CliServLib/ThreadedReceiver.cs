@@ -71,37 +71,58 @@ namespace CliServLib
                     // Clear out buffer before receiving new data
                     client.ClearData();
 
-                    var res = TcpLibExtensions.ReceiveAsync(client.ClientSocket, client.ClientData(), 0, client.DataSize, SocketFlags.None, client.CancelSource.Token);
-                    if (res.IsFaulted || (res.Result == null) || res.Result.Failure)
+                    try
                     {
-                        // Just close the socket.  Look into trying to reconnect
-                        Console.WriteLine("Receive Fault. Closing socket {0} to client.", client.ClientSocket.Handle);
-                        ClientStore.RemoveClient((long)client.ClientSocket.Handle);
-                    }
-                    else
-                    {
-                        try
+                        var res = TcpLibExtensions.ReceiveAsync(client.ClientSocket, client.ClientData(), 0, client.DataSize, SocketFlags.None, client.CancelSource.Token);
+                        if (res.IsFaulted || (res.Result == null) || res.Result.Failure)
                         {
-                            var value = ClientData<MessageData>.DeserializeFromByteArray<MessageData>(client.ClientData());
-                            rcvData.clientData = value;
-                            rcvData.clientHandle = (long)client.ClientSocket.Handle;
+                            // Just close the socket.  Look into trying to reconnect
+                            Console.WriteLine("Receive Fault. Closing socket {0} to client.", client.ClientSocket.Handle);
+                            ClientStore.RemoveClient((long)client.ClientSocket.Handle);
+                        }
+                        else
+                        {
+                            try
+                            {
+                                var value = ClientData<MessageData>.DeserializeFromByteArray<MessageData>(client.ClientData());
+                                rcvData.clientData = value;
+                                rcvData.clientHandle = (long)client.ClientSocket.Handle;
 
-                            // This indicates a response from the server to a client of which there could be many
-                            if (value.response)
-                            {
-                                // Client received
-                                OnClientDataReceived(new AsyncCompletedEventArgs(null, false, rcvData));
+                                if (value != null)
+                                {
+                                    // This indicates a response from the server to a client of which there could be many
+                                    if (value.response)
+                                    {
+                                        // Client received
+                                        OnClientDataReceived(new AsyncCompletedEventArgs(null, false, rcvData));
+                                    }
+                                    else
+                                    {
+                                        // Server received
+                                        OnServerDataReceived(new AsyncCompletedEventArgs(null, false, rcvData));
+                                    }
+                                }
+                                else
+                                {
+                                    // Send null message to client and server so they can detect disconnection
+                                    OnClientDataReceived(new AsyncCompletedEventArgs(null, false, rcvData));
+                                    OnServerDataReceived(new AsyncCompletedEventArgs(null, false, rcvData));
+                                }
                             }
-                            else
+                            catch (Exception e)
                             {
-                                // Server received
-                                OnServerDataReceived(new AsyncCompletedEventArgs(null, false, rcvData));
+                                Console.WriteLine(e.Message);
                             }
                         }
-                        catch (Exception e)
-                        {
-                            Console.WriteLine(e.Message);
-                        }
+                    }
+                    catch (TaskCanceledException tc)
+                    {
+                        looper.LoopDone = true;
+                        System.Diagnostics.Debug.WriteLine("receive Task Cancelled: " + tc.Message);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Receive Exception: " + ex.Message);
                     }
                 }
                 Console.WriteLine("Receive Loop Exiting...");

@@ -108,7 +108,7 @@ namespace CliServLib
         {
             if (data != null)
             {
-                data[0] = (byte)'\0';
+                Array.Clear(data, 0, data.Length);
             }
         }
 

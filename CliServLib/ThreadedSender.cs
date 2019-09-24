@@ -83,6 +83,11 @@ namespace CliServLib
 
                         }
                     }
+                    catch (TaskCanceledException tc)
+                    {
+                        looper.LoopDone = true;
+                        System.Diagnostics.Debug.WriteLine("Send Task Cancelled: " + tc.Message);
+                    }
                     catch (Exception e)
                     {
                         Console.WriteLine("Send Exception: " + e.Message);
