@@ -12,13 +12,6 @@ namespace CliServLib
     {
         private static readonly Dictionary<long, Client> clientStore = new Dictionary<long, Client>();
 
-        //public static Action<MessageData> MessageAction;
-
-        //public ClientStore(Action<MessageData> action)
-        //{
-        //    MessageAction = action;
-        //}
-
         public static void AddClient(Client client, long handle)
         {
             clientStore.Add(handle, client);
@@ -29,7 +22,8 @@ namespace CliServLib
             Client client = FindClient(handle);
             if (client != default(Client))
             {
-                client.Dispose();
+                client.Stop();
+                //client.Dispose();
             }
             return clientStore.Remove(handle);
         }
@@ -62,7 +56,8 @@ namespace CliServLib
         {
             foreach (var client in clientStore.ToList())
             {
-                client.Value.Dispose();
+                client.Value.Stop();
+                //client.Value.Dispose();
                 clientStore.Remove(client.Key);
             }
         }
@@ -85,33 +80,6 @@ namespace CliServLib
                 retVal |= client.Value.ClientDone;
             }
             return retVal;
-        }
-
-        public static void ClientReceiveThread(object sender, AsyncCompletedEventArgs e)
-        {
-            // This is a problem without a GUI thread.  There is no easy way to check to
-            // see if the Invoke is possible so it's commented out as a placeholder.
-            //if (this.InvokeRequired)
-            //{
-            //    BeginInvoke(new AsyncCompletedEventHandler(ClientReceiveThread),
-            //        new object[] { sender, e });
-            //}
-            //else
-            //{
-            if (e.Error == null)
-            {
-                //string message = e.UserState as string;
-                MessageData message = e.UserState as MessageData;
-                if (message != null)
-                {
-                    Console.WriteLine("[{0}]: {1}", message.name, message.message);
-                }
-                //if (MessageAction != null)
-                //{
-                //    MessageAction.Invoke(message);
-                //}
-            }
-            //}
         }
 
         public static Client FindClient(long id)

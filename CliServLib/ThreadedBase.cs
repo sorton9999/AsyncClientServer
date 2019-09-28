@@ -50,7 +50,7 @@ namespace CliServLib
         //}
         public object Start(object obj)
         {
-            theThread = new Thread((s) =>
+            theThread = new Thread(() =>
             {
                 if (looper != null)
                 {
@@ -95,7 +95,14 @@ namespace CliServLib
                 looper.LoopDone = true;
                 try
                 {
-                    theThread.Join();
+                    if (theThread.IsAlive && theThread.ThreadState != ThreadState.WaitSleepJoin)
+                    {
+                        theThread.Join();
+                    }
+                    else
+                    {
+                        // It's blocked.  Trying to cancel gracefully.
+                    }
                 }
                 catch (Exception)
                 {

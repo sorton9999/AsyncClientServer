@@ -9,9 +9,10 @@ namespace TcpLib
     [Serializable]
     public class MessageData
     {
-        public int id;
-        public long handle;
-        public string name;
-        public object message;
+        public int id = 0;
+        public long handle = 0;
+        public string name = String.Empty;
+        public bool response = false;
+        public object message = null;
     }
 }

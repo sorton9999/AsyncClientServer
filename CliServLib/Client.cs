@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using TcpLib;
 
@@ -14,6 +15,7 @@ namespace CliServLib
 
         Socket clientSocket = null;
         ServiceController<MessageData> controller = null;
+        CancellationTokenSource cancelSource = new CancellationTokenSource();
 
 
         public Client(Socket socket, int dataSize)
@@ -50,6 +52,22 @@ namespace CliServLib
             set { controller.ClientData().DataSize = value; }
         }
 
+        public ThreadedReceiver Receiver
+        {
+            get { return controller.Receiver; }
+        }
+
+        public ThreadedSender Sender
+        {
+            get { return controller.Sender; }
+        }
+
+        public CancellationTokenSource CancelSource
+        {
+            get { return cancelSource; }
+            set { cancelSource = value; }
+        }
+
         public void Dispose()
         {
             Console.WriteLine("Disposing Controller for Client " + ClientSocket.Handle);
@@ -81,7 +99,22 @@ namespace CliServLib
 
         public bool Stop()
         {
+            CancelSource.Cancel();
+            SetMeFreeAsync();
             return controller.StopController();
+        }
+
+        /// <summary>
+        /// This method should only be called when exiting.
+        /// Send 1 byte of data to the SendAsync method with the cancellation token so it
+        /// will return from the blocked call and cancel.  This will make the send loop
+        /// exit for a graceful stop.  
+        /// </summary>
+        private async void SetMeFreeAsync()
+        {
+            // This method is blocked in the ThreadedSender loop so call this
+            // to allow it to return and then cancel.
+            await TcpLib.TcpLibExtensions.SendBufferAsync(ClientSocket, new byte[1], 0, 1, SocketFlags.None, CancelSource.Token);
         }
 
         public void ClearData()
