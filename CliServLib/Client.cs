@@ -132,5 +132,11 @@ namespace CliServLib
             controller.Sender.DataGetter.SetData(data);
         }
 
+        public void SetData(object data, IDataGetter getter)
+        {
+            controller.Sender.DataGetter = getter;
+            controller.Sender.DataGetter.SetData(data);
+        }
+
     }
 }

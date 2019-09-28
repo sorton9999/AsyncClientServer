@@ -41,7 +41,7 @@ namespace CliServLib
         public IDataGetter DataGetter
         {
             get { return dataGetter; }
-            private set { dataGetter = value; }
+            set { dataGetter = value; }
         }
 
         public Result ResultLoop(object arg)
