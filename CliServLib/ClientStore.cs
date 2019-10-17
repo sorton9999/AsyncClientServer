@@ -12,9 +12,13 @@ namespace CliServLib
     {
         private static readonly Dictionary<long, Client> clientStore = new Dictionary<long, Client>();
 
+        private static long[] keys;
+        private static int curIdx = -1;
+
         public static void AddClient(Client client, long handle)
         {
             clientStore.Add(handle, client);
+            keys = clientStore.Keys.ToArray();
         }
 
         public static bool RemoveClient(long handle)
@@ -50,6 +54,17 @@ namespace CliServLib
                 retVal = true;
             }
             return retVal;
+        }
+
+        public static Client NextClient()
+        {
+            ++curIdx;
+            if (curIdx >= keys.Count())
+            {
+                curIdx = -1;
+                return null;
+            }
+            return clientStore[keys[curIdx]];
         }
 
         public static void RemoveAllClients()

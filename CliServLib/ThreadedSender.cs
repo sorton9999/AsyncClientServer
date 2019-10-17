@@ -11,18 +11,9 @@ namespace CliServLib
 {
     public class ThreadedSender : ThreadedBase, ISend
     {
-        IDataGetter dataGetter = null;
-
         public ThreadedSender()
             : base()
         {
-            dataGetter = new DefaultDataGetter();
-            StartParam(new ParameterizedThreadStart(SendLoop));
-        }
-
-        public ThreadedSender(IDataGetter getter)
-        {
-            dataGetter = getter;
             StartParam(new ParameterizedThreadStart(SendLoop));
         }
 
@@ -36,12 +27,6 @@ namespace CliServLib
         {
             get { return theThread; }
             private set { theThread = value; }
-        }
-
-        public IDataGetter DataGetter
-        {
-            get { return dataGetter; }
-            set { dataGetter = value; }
         }
 
         public Result ResultLoop(object arg)
@@ -60,7 +45,7 @@ namespace CliServLib
                 {
                     try
                     {
-                        var eventData = GetDataAsync.GetMessageDataAsync(dataGetter, client.ClientHandle);
+                        var eventData = GetDataAsync.GetMessageDataAsync(client.DataGetter, client.ClientHandle);
 
                         if (eventData != null)
                         {
@@ -77,6 +62,7 @@ namespace CliServLib
                                 else
                                 {
                                     // Data sent.  Clear out buffer
+                                    System.Diagnostics.Debug.WriteLine("Client {0} Sent Data.", client.ClientSocket.Handle);
                                     client.ClearData();
                                 }
                             }
