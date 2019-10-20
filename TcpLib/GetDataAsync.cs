@@ -14,7 +14,7 @@ namespace TcpLib
             {
                 //Console.Write("Enter a message to Send: ");
                 var task = await Task<MessageData>.Factory.StartNew(() => getter.GetData(handle));
-                getter.SetData(null);
+                //getter.SetData(null);
                 return task;
             }
             catch (Exception e)
@@ -29,7 +29,7 @@ namespace TcpLib
             {
                 //Console.Write("Enter a message to Send: ");
                 var task = await Task<MessageData>.Factory.StartNew(() => getter.GetData(handle));
-                getter.SetData(null);
+                //getter.SetData(null);
                 return task;
             }
             catch (Exception e)

@@ -29,19 +29,6 @@ namespace CliServLib
             //ThreadedReceiver.DataReceived += ClientStore.ClientReceiveThread;
         }
 
-        public ServiceController(Socket clientSocket, int size, IDataGetter dataGetter)
-        {
-            clientData = new ClientData<T>(size);
-            clientData.ClientSocket = clientSocket;
-            if (clientSocket.Connected)
-            {
-                clientData.State = ClientData<T>.ClientState.CONNECTED;
-            }
-            sender = new ThreadedSender(dataGetter);
-            receiver = new ThreadedReceiver();
-            //ThreadedReceiver.DataReceived += ClientStore.ClientReceiveThread;
-        }
-
         public ServiceController(ClientData<T> client)
         {
             clientData = client;

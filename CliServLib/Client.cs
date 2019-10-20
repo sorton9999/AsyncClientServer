@@ -17,17 +17,22 @@ namespace CliServLib
         ServiceController<MessageData> controller = null;
         CancellationTokenSource cancelSource = new CancellationTokenSource();
 
+        IDataGetter dataGetter = null;
 
         public Client(Socket socket, int dataSize)
         {
             ClientSocket = socket;
             controller = new ServiceController<MessageData>(socket, dataSize);
+
+            dataGetter = new DefaultDataGetter();
         }
 
         public Client(Socket socket, int dataSize, IDataGetter dataGetter)
         {
             ClientSocket = socket;
-            controller = new ServiceController<MessageData>(socket, dataSize, dataGetter);
+            controller = new ServiceController<MessageData>(socket, dataSize);
+
+            this.dataGetter = dataGetter;
         }
 
         public Socket ClientSocket
@@ -92,6 +97,12 @@ namespace CliServLib
             disposed = true;
         }
 
+        public IDataGetter DataGetter
+        {
+            get { return dataGetter; }
+            set { dataGetter = value; }
+        }
+
         public void Start()
         {
             controller.StartController(this);
@@ -129,7 +140,13 @@ namespace CliServLib
 
         public void SetData(object data)
         {
-            controller.Sender.DataGetter.SetData(data);
+            DataGetter.SetData(data);
+        }
+
+        public void SetData(object data, IDataGetter getter)
+        {
+            DataGetter = getter;
+            DataGetter.SetData(data);
         }
 
     }
