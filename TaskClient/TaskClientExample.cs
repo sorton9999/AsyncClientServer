@@ -19,6 +19,9 @@ namespace TaskClient
 
         Socket _clientSocket;
 
+        System.Threading.Thread rcvThread;
+        Result rcvResult;
+
         ClientConnectAsync conn = new ClientConnectAsync();
 
         bool done = false;
@@ -27,6 +30,24 @@ namespace TaskClient
         {
             _ip = ip;
             _port = port;
+
+            rcvThread = new System.Threading.Thread(new System.Threading.ParameterizedThreadStart(ReceiveHandler));
+        }
+
+        public Result RunResult
+        {
+            get { return rcvResult; }
+        }
+
+        public void Start()
+        {
+            rcvThread.Start();
+        }
+
+        private async void ReceiveHandler(object obj)
+        {
+            rcvResult = await SendAndReceiveMessageAsync();
+            Task.WaitAny();
         }
 
         public async Task<Result> SendAndReceiveMessageAsync()
@@ -34,7 +55,7 @@ namespace TaskClient
             var serverPort = ((_port > 0) ? _port : CliServDefaults.DfltPort);
             string address = _ip;
 
-            var connectResult = await conn.ConnectAsync(_port, _ip);
+            var connectResult = await conn.ConnectAsync(_port, _ip, 3000, 10);
 
             Console.WriteLine("Connecting to IP: {0}, Port: {1}", (!String.IsNullOrEmpty(address) ? address : "localhost"), serverPort);
 
@@ -49,13 +70,39 @@ namespace TaskClient
             string name = String.Empty;
             Console.Write("Enter a Name: ");
             name = Console.ReadLine();
-            MessageData data = new MessageData();
-            data.name = name;
+            MessageData sendData = new MessageData();
+            sendData.name = name;
             DataGetter getter = new DataGetter();
             while (!done)
             {
-                var eventData = GetDataAsync.GetMessageDataAsync(getter, 10);
+                PrintMenu();
+                string action = Console.ReadLine();
+                MessageData eventData = SendAction(action, ref done);
                 if (eventData != null)
+                {
+                    string message = (string)eventData.message;
+
+                    if (String.Compare(message, "exit", true) == 0)
+                    {
+                        done = true;
+                        message = "I'm exiting.  Goodbye.";
+                    }
+                    sendData.message = message;
+                    sendData.id = eventData.id;
+
+                    var sendResult = await SendMessageAsync(sendData);
+                    if (sendResult.Failure)
+                    {
+                        return Result.Fail("There was a problem sending a message to the server.");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Empty Message.");
+                }
+                /*
+                var eventData = GetDataAsync.GetMessageDataAsync(getter, (long)_clientSocket.Handle);
+                if (eventData != null && eventData.Result != null && eventData.Result.message != null)
                 {
                     string message = (string)eventData.Result.message;
                     if (String.Compare(message, "exit", true) == 0)
@@ -64,6 +111,7 @@ namespace TaskClient
                         message = "I'm exiting.  Goodbye.";
                     }
                     data.message = message;
+                    data.id = eventData.Result.id;
                     var sendResult = SendMessageAsync(data);
 
                     if (sendResult.Result.Failure)
@@ -71,6 +119,7 @@ namespace TaskClient
                         return Result.Fail("There was a problem sending a message to the server.");
                     }
                 }
+                */
             }
             // Report successful
             return Result.Ok();
@@ -100,6 +149,88 @@ namespace TaskClient
             }
             // Sent
             return Result.Ok("Message sent.");
+        }
+
+        public async Task<Result<MessageData>> ReceiveMessageAsync()
+        {
+            byte[] data = new byte[CliServDefaults.BufferSize];
+            MessageData mData = null;
+            var recvResult = await _clientSocket.ReceiveWithTimeoutAsync(
+                data,
+                0,
+                data.Length,
+                SocketFlags.None,
+                ReceiveTypeEnum.ReceiveTypeDelay,
+                CliServDefaults.SendTimeoutMs
+                )
+                .ConfigureAwait(false);
+
+            if (recvResult.Value > 0)
+            {
+                mData = SerializeDeserialize.DeserializeFromByteArray<MessageData>(data);
+            }
+            return Result.Ok(mData);
+        }
+
+        private MessageData SendAction(string action, ref bool done)
+        {
+            IDataGetter getter = null;
+            switch (action)
+            {
+                case "0":
+                    Console.WriteLine("User chose to Exit.");
+                    done = true;
+                    break;
+                case "1":
+                    // Send Message to Everyone
+                    getter = new DataGetter();
+                    break;
+                case "2":
+                    // Send message to specific user
+                    getter = new UserDataGetter();
+                    break;
+                case "3":
+                    // Get all users
+                    getter = new UserNamesDataGetter();
+                    break;
+                case "q":
+                case "Q":
+                    // Quit.  Send 'exit' string in message
+                    MessageData message = new MessageData();
+                    message.id = 0;
+                    message.handle = 0;
+                    message.name = String.Empty;
+                    message.response = false;
+                    message.message = "exit";
+                    return message;
+                    // No break, returning directly.
+                default:
+                    Console.WriteLine("Unsupported Action " + action);
+                    break;
+            }
+            if (getter != null)
+            {
+                var eventData = GetDataAsync.GetMessageDataAsync(getter, (long)_clientSocket.Handle);
+                if ((eventData == null) || eventData.IsFaulted || (eventData.Status == TaskStatus.Canceled))
+                {
+                    return null;
+                }
+                else
+                {
+                    return eventData.Result;
+                }
+            }
+            return null;
+        }
+
+        private void PrintMenu()
+        {
+            Console.WriteLine("Actions Menu");
+            Console.WriteLine("[1]   Send Message to Everyone");
+            Console.WriteLine("[2]   Send Message to Specific User");
+            Console.WriteLine("[3]   Print All Users");
+            Console.WriteLine("[Q|q] Quit");
+            Console.Write("What Do You Want to Do? --> ");
         }
     }
 

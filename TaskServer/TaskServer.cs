@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CliServLib;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -27,8 +28,73 @@ namespace TaskServer
 
         public TaskServer()
         {
+            ThreadedReceiver.ServerDataReceived += ThreadedReceiver_ServerDataReceived;
+            listenerThread.OnClientConnect += ListenerThread_OnClientConnect;
             clients = new CliServLib.ClientStore();
             listenerThread.Run(clients);
+        }
+
+        private void ListenerThread_OnClientConnect(long handle)
+        {
+            Console.WriteLine("Client " + handle + " connected.");
+        }
+
+        private void ThreadedReceiver_ServerDataReceived(object sender, AsyncCompletedEventArgs e)
+        {
+            if (e.Error == null)
+            {
+                ReceiveData data = e.UserState as ReceiveData;
+                if (data != null)
+                {
+                    MessageData messageData = data.clientData;
+                    Client client = ClientStore.FindClient(data.clientHandle);
+                    if (messageData != null && messageData.id > 0)
+                    {
+                        Console.WriteLine("received Message Type: {0}", messageData.id);
+                        if (client != null)
+                        {
+                            Console.WriteLine("\tFrom Client: {0}", data.clientHandle);
+
+                            // It's a string message, so just print it out for now.
+                            Console.WriteLine("[{0}]: {1} ", messageData.name, messageData.message);
+                        }
+
+                        switch (messageData.id)
+                        {
+                            case 1:
+                                // Send message to all users
+                                HandleGlobalMessageSend(client, messageData);
+                                break;
+                            case 2:
+                                // Send message to specific user
+                                HandleUserMessageSend(client, messageData);
+                                break;
+                            case 3:
+                                // Get all user names and send to asking client
+                                GetAllUsers(client, messageData);
+                                break;
+                            default:
+                                Console.WriteLine("Unsupported Message Type: " + messageData.id);
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+
+        private void HandleGlobalMessageSend(Client client, MessageData messageData)
+        {
+            Console.WriteLine("Handling Global Send.");
+        }
+
+        private void HandleUserMessageSend(Client client, MessageData messageData)
+        {
+            Console.WriteLine("Handling Specific User Send.");
+        }
+
+        private void GetAllUsers(Client client, MessageData messageData)
+        {
+            Console.WriteLine("Handling Get All Users.");
         }
 
         //public void ReceiveData(MessageData data)

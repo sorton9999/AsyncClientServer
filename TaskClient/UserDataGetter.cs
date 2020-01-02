@@ -7,25 +7,29 @@ using TcpLib;
 
 namespace TaskClient
 {
-    public class DataGetter : IDataGetter
+    public class UserDataGetter : IDataGetter
     {
         public MessageData GetData()
         {
+            Console.Write("Who Do You Want to Send a Message To? ");
+            string who = Console.ReadLine();
             Console.WriteLine("Enter a Message to Send: ");
             MessageData messageData = new MessageData();
             string message = Console.ReadLine();
-            messageData.message = message;
-            messageData.id = 1;
+            messageData.message = who + ":" + message;
+            messageData.id = 2;
             return messageData;
         }
 
         public MessageData GetData(long handle)
         {
+            Console.Write("Who Do You Want to Send a Message To? ");
+            string who = Console.ReadLine();
             Console.WriteLine("Enter a Message to Send: ");
             MessageData messageData = new MessageData();
             string message = Console.ReadLine();
-            messageData.message = message;
-            messageData.id = 1;
+            messageData.message = who + ":" + message;
+            messageData.id = 2;
             messageData.handle = handle;
             return messageData;
         }

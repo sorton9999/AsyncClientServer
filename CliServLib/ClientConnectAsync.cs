@@ -62,12 +62,24 @@ namespace CliServLib
                         lType,
                         timeoutMs)
                     .ConfigureAwait(false);
-                System.Diagnostics.Debug.WriteLine("We're good.  Returning Socket.");
 
-                // Notify caller of connection
-                OnConnect?.Invoke(connectResult.Value);
+                if (connectResult.Success)
+                {
+                    System.Diagnostics.Debug.WriteLine("We're good.  Returning Socket.");
 
+                    // Notify caller of connection
+                    OnConnect?.Invoke(connectResult.Value);
+                }
+                else
+                {
+                    Console.WriteLine("Connection Error: " + connectResult.Error);
+                }
                 return connectResult;
+            }
+            catch (TimeoutException t)
+            {
+                System.Console.WriteLine("Timeout Exception: " + t.Message);
+                return Result.Fail<Socket>("Connection Timeout." + t.Message);
             }
             catch (Exception e)
             {
