@@ -12,7 +12,7 @@ namespace CliServLib
 {
     public class ThreadedListener : ThreadedBase, IListen
     {
-        public delegate void ConnectionDel(long handle);
+        public delegate void ConnectionDel(Client client);
         public event ConnectionDel OnClientConnect;
         bool loopDone = false;
         Socket _listenSocket;
@@ -52,7 +52,7 @@ namespace CliServLib
                             // Start the service loops
                             client.Start();
                             ClientStore.AddClient(client, client.ClientHandle);
-                            OnClientConnect?.Invoke(client.ClientHandle);
+                            OnClientConnect?.Invoke(client);
                         }
                         catch (Exception e)
                         {

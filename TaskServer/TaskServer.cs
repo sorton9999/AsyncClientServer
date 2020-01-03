@@ -19,6 +19,9 @@ namespace TaskServer
         // Listener
         private CliServLib.ThreadedListener listenerThread = new CliServLib.ThreadedListener();
 
+        // Store User Names associated with its client handle
+        private Dictionary<long, string> ClientHandleToUserName = new Dictionary<long, string>();
+
         // Container of Clients
         CliServLib.ClientStore clients;
 
@@ -34,9 +37,9 @@ namespace TaskServer
             listenerThread.Run(clients);
         }
 
-        private void ListenerThread_OnClientConnect(long handle)
+        private void ListenerThread_OnClientConnect(Client client)
         {
-            Console.WriteLine("Client " + handle + " connected.");
+            Console.WriteLine("Client " + client.ClientHandle + " connected.");
         }
 
         private void ThreadedReceiver_ServerDataReceived(object sender, AsyncCompletedEventArgs e)
@@ -61,6 +64,10 @@ namespace TaskServer
 
                         switch (messageData.id)
                         {
+                            case 99:
+                                // Client Exit
+                                HandleClientExit(client, messageData);
+                                break;
                             case 1:
                                 // Send message to all users
                                 HandleGlobalMessageSend(client, messageData);
@@ -73,12 +80,57 @@ namespace TaskServer
                                 // Get all user names and send to asking client
                                 GetAllUsers(client, messageData);
                                 break;
+                            case 10:
+                                HandleGetUserName(client, messageData);
+                                break;
                             default:
                                 Console.WriteLine("Unsupported Message Type: " + messageData.id);
                                 break;
                         }
                     }
                 }
+            }
+        }
+
+        private void HandleClientExit(Client client, MessageData messageData)
+        {
+            try
+            {
+                ClientHandleToUserName.Remove(client.ClientHandle);
+                MessageData msg = new MessageData();
+                msg.handle = messageData.handle;
+                msg.id = 1;
+                msg.name = messageData.name;
+                msg.response = false;
+                msg.message = String.Format("[{0}] has left.", messageData.name);
+                HandleGlobalMessageSend(client, msg);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Client Handle Remove Exception: " + ex.Message);
+            }
+        }
+
+        private void HandleGetUserName(Client client, MessageData messageData)
+        {
+            Console.WriteLine("Handle User Name Register.");
+
+            try
+            {
+                // Register the name
+                ClientHandleToUserName.Add(client.ClientHandle, (string)messageData.name);
+
+                MessageData msg = new MessageData();
+                msg.handle = messageData.handle;
+                msg.id = 1;
+                msg.name = messageData.name;
+                msg.response = false;
+                msg.message = String.Format("[{0}] has joined and says \'{1}\'.", messageData.name, messageData.message);
+                HandleGlobalMessageSend(client, msg);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Client already registered a Name?: " + e.Message);
             }
         }
 
@@ -103,11 +155,84 @@ namespace TaskServer
         private void HandleUserMessageSend(Client client, MessageData messageData)
         {
             Console.WriteLine("Handling Specific User Send.");
+            // Do a reverse lookup for name of client to send message to
+            string name = String.Empty;
+            string message = String.Empty;
+            string[] parts = (messageData.message as string).Split(':');
+            if (parts.Length > 1)
+            {
+                name = parts[0].Trim();
+                message = parts[1].Trim();
+            }
+            if (!String.IsNullOrEmpty(name))
+            {
+                try
+                {
+                    if (!ClientHandleToUserName.ContainsValue(name))
+                    {
+                        Console.WriteLine("This name [{0}] is not registered", name);
+                    }
+                    var myKey = ClientHandleToUserName.FirstOrDefault(x => x.Value == name).Key;
+                    Client found = ClientStore.FindClient(myKey);
+                    if (found != null)
+                    {
+                        MessageData sendMsg = new MessageData();
+                        sendMsg.handle = client.ClientHandle;
+                        sendMsg.id = messageData.id;
+                        sendMsg.message = String.Format("[{0}] says \'{1}\'", messageData.name, message);
+                        sendMsg.name = name;
+                        sendMsg.response = false;
+                        var res = SendMessageAsync(found, sendMsg);
+                        if (res.Result.Failure)
+                        {
+                            Console.WriteLine("There is a problem sending data out to specific user.");
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Message Send Exception: " + e.Message);
+                }
+            }
         }
 
         private void GetAllUsers(Client client, MessageData messageData)
         {
             Console.WriteLine("Handling Get All Users.");
+            MessageData sendMsg = new MessageData();
+            sendMsg.handle = client.ClientHandle;
+            sendMsg.id = messageData.id;
+            sendMsg.name = messageData.name;
+            sendMsg.response = false;
+            StringBuilder buffer = new StringBuilder();
+            buffer.AppendLine("Users:");
+            var keys = ClientHandleToUserName.Keys;
+            foreach (var item in ClientHandleToUserName)
+            {
+                buffer.AppendFormat("[{0}] ", item.Value);
+            }
+            sendMsg.message = buffer.ToString();
+
+            var res = SendMessageAsync(client, sendMsg);
+            if (res.Result.Failure)
+            {
+                Console.WriteLine("There is a problem sending data out to specific user.");
+            }
+        }
+
+        private void GetUserName(Client client)
+        {
+            MessageData data = new MessageData();
+            data.id = 10;
+            data.message = "Get User Name";
+            data.response = false;
+            data.handle = client.ClientHandle;
+
+            var res = SendMessageAsync(client, data);
+            if (res.IsFaulted || res.IsCanceled || res.Result.Failure)
+            {
+                Console.WriteLine("Send Name Message Failed: " + res.Result.Error);
+            }
         }
 
         //public void ReceiveData(MessageData data)

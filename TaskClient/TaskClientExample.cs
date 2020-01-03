@@ -14,18 +14,27 @@ namespace TaskClient
 {
     public class TaskClientExample
     {
+        // Connection info
         string _ip = String.Empty;
         int _port = 0;
 
+        // Entered name for this client
+        string name = String.Empty;
+
+        // My socket
         Socket _clientSocket;
 
+        // Receive/Send threads
         System.Threading.Thread rcvThread;
         System.Threading.Thread sndThread;
+        // Keep track of last operation result for rec/send
         Result rcvResult;
         Result sndResult;
 
+        // Connection object
         ClientConnectAsync conn = new ClientConnectAsync();
 
+        // Are we done?  Turning this to TRUE exits thread loops
         bool done = false;
 
         public TaskClientExample(string ip, int port)
@@ -60,13 +69,51 @@ namespace TaskClient
                 Task.WaitAny();
                 if (rcvRes.Success && (rcvRes.Value != null))
                 {
-                    Console.WriteLine("Message: " + rcvRes.Value.message);
+                    HandleMessages(rcvRes.Value);
                 }
             }
         //    else
         //    {
         //        Console.WriteLine("Receive Failure!");
         //    }
+        }
+
+        private void HandleMessages(MessageData msg)
+        {
+            Console.WriteLine("Handling Message From Server.");
+
+            switch (msg.id)
+            {
+                case 1:
+                    // Received Global Message
+                    Console.WriteLine("Message: " + msg.message);
+                    break;
+                case 2:
+                    // Received Specific User Message
+                    Console.WriteLine("Message: " + msg.message);
+                    break;
+                case 3:
+                    // Received List of Users
+                    Console.WriteLine(msg.message);
+                    break;
+                case 10:
+                    // Received request for User Name to Register with Server
+                    MessageData data = new MessageData();
+                    data.id = msg.id;
+                    data.name = name;
+                    data.handle = (long)_clientSocket.Handle;
+                    data.response = true;
+                    data.message = "Client Name";
+                    var res = SendMessageAsync(data);
+                    if (res.IsFaulted || res.IsCanceled || res.Result.Failure)
+                    {
+                        Console.WriteLine("Name Send Failure: " + res.Result.Error);
+                    }
+                    break;
+                default:
+                    Console.WriteLine("Unsupported Message Type.  Doing Nothing.");
+                    break;
+            }
         }
 
         private async void SendHandler(object obj)
@@ -79,6 +126,7 @@ namespace TaskClient
         {
             var serverPort = ((_port > 0) ? _port : CliServDefaults.DfltPort);
             string address = _ip;
+            bool greetingSent = false;
 
             var connectResult = await conn.ConnectAsync(_port, _ip, 3000, 10);
 
@@ -92,17 +140,28 @@ namespace TaskClient
 
             _clientSocket = connectResult.Value;
 
-            string name = String.Empty;
+            // Register a name for this client
             Console.Write("Enter a Name: ");
             name = Console.ReadLine();
             MessageData sendData = new MessageData();
             sendData.name = name;
             DataGetter getter = new DataGetter();
+            MessageData eventData = null;
             while (!done)
             {
-                PrintMenu();
-                string action = Console.ReadLine();
-                MessageData eventData = SendAction(action, ref done);
+                // Have user send a global message upon first connection
+                if (!greetingSent)
+                {
+                    Console.WriteLine("Send a greeting to Everyone. This registers your Name to the Server.");
+                    eventData = SendAction("10", ref done);
+                    greetingSent = true;
+                }
+                else
+                {
+                    PrintMenu();
+                    string action = Console.ReadLine();
+                    eventData = SendAction(action, ref done);
+                }
                 if (eventData != null)
                 {
                     string message = (string)eventData.message;
@@ -186,7 +245,7 @@ namespace TaskClient
                 data.Length,
                 SocketFlags.None,
                 ReceiveTypeEnum.ReceiveTypeDelay,
-                //CliServDefaults.SeSndTimeoutMs
+                // Wait forever
                 -1
                 )
                 .ConfigureAwait(false);
@@ -203,7 +262,8 @@ namespace TaskClient
             IDataGetter getter = null;
             switch (action)
             {
-                case "0":
+                case "99":
+                    // Respond to Quit
                     Console.WriteLine("User chose to Exit.");
                     done = true;
                     break;
@@ -219,11 +279,17 @@ namespace TaskClient
                     // Get all users
                     getter = new UserNamesDataGetter();
                     break;
+                case "10":
+                    // Greeting message
+                    getter = new DataGetter();
+                    // Tell the getter that it's a greeting message
+                    getter.SetData(true);
+                    break;
                 case "q":
                 case "Q":
                     // Quit.  Send 'exit' string in message
                     MessageData message = new MessageData();
-                    message.id = 0;
+                    message.id = 99;
                     message.handle = 0;
                     message.name = String.Empty;
                     message.response = false;
