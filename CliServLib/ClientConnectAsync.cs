@@ -46,10 +46,10 @@ namespace CliServLib
                     .FirstOrDefault(ip => ip.AddressFamily == _addressFamily);
                 address = ipAddress.ToString();
             }
-            else
-            {
-                return Result.Fail<Socket>("Empty IP Address");
-            }
+            //else
+            //{
+            //    return Result.Fail<Socket>("Empty IP Address");
+            //}
 
             ListenTypeEnum lType = (maxCycles > 0 ? ListenTypeEnum.ListenTypeCycle : ListenTypeEnum.ListenTypeDelay);
             //System.Threading.Thread.Sleep(1000);

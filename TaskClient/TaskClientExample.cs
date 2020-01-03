@@ -20,7 +20,9 @@ namespace TaskClient
         Socket _clientSocket;
 
         System.Threading.Thread rcvThread;
+        System.Threading.Thread sndThread;
         Result rcvResult;
+        Result sndResult;
 
         ClientConnectAsync conn = new ClientConnectAsync();
 
@@ -32,21 +34,44 @@ namespace TaskClient
             _port = port;
 
             rcvThread = new System.Threading.Thread(new System.Threading.ParameterizedThreadStart(ReceiveHandler));
+            sndThread = new System.Threading.Thread(new System.Threading.ParameterizedThreadStart(SendHandler));
         }
 
         public Result RunResult
         {
-            get { return rcvResult; }
+            get { return sndResult; }
         }
 
         public void Start()
         {
             rcvThread.Start();
+            sndThread.Start();
         }
 
         private async void ReceiveHandler(object obj)
         {
-            rcvResult = await SendAndReceiveMessageAsync();
+            while (_clientSocket == null || !_clientSocket.Connected)
+            {
+                System.Threading.Thread.Sleep(250);
+            }
+            while (!done)
+            {
+                var rcvRes = await ReceiveMessageAsync();
+                Task.WaitAny();
+                if (rcvRes.Success && (rcvRes.Value != null))
+                {
+                    Console.WriteLine("Message: " + rcvRes.Value.message);
+                }
+            }
+        //    else
+        //    {
+        //        Console.WriteLine("Receive Failure!");
+        //    }
+        }
+
+        private async void SendHandler(object obj)
+        {
+            sndResult = await SendAndReceiveMessageAsync();
             Task.WaitAny();
         }
 
@@ -161,7 +186,8 @@ namespace TaskClient
                 data.Length,
                 SocketFlags.None,
                 ReceiveTypeEnum.ReceiveTypeDelay,
-                CliServDefaults.SendTimeoutMs
+                //CliServDefaults.SeSndTimeoutMs
+                -1
                 )
                 .ConfigureAwait(false);
 

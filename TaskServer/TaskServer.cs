@@ -85,6 +85,19 @@ namespace TaskServer
         private void HandleGlobalMessageSend(Client client, MessageData messageData)
         {
             Console.WriteLine("Handling Global Send.");
+            Client curClient = null;
+            while ((curClient = ClientStore.NextClient()) != null)
+            {
+                if (curClient.ClientHandle == client.ClientHandle)
+                {
+                    continue;
+                }
+                var res = SendMessageAsync(curClient, messageData);
+                if (res.Result.Failure)
+                {
+                    Console.WriteLine("There is a problem sending data out to the client.");
+                }
+            }
         }
 
         private void HandleUserMessageSend(Client client, MessageData messageData)
@@ -101,6 +114,31 @@ namespace TaskServer
         //{
         //    Console.WriteLine("Received Message of Type: {0}", data.id);
         //}
+        public async Task<Result<string>> SendMessageAsync(Client client, object message)
+        {
+            // Encode a string message before sending it to the server
+            var messageData = ClientData<MessageData>.SerializeToByteArray(message);
+
+            // Send it away
+            var sendResult =
+                await client.ClientSocket.SendWithTimeoutAsync(
+                    messageData,
+                    0,
+                    messageData.Length,
+                    0,
+                    SendTypeEnum.SendTypeCycle,
+                    CliServDefaults.SendTimeoutMs
+                )
+                .ConfigureAwait(false);
+
+            // If Task did not complete successfully, report the error
+            if (sendResult.Failure)
+            {
+                return Result.Fail<string>("There was an error sending data to the server");
+            }
+            // Sent
+            return Result.Ok("Message sent.");
+        }
 
         public bool ServerIsDone
         {
