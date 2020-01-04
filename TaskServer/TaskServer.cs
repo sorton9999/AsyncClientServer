@@ -70,6 +70,8 @@ namespace TaskServer
                                 break;
                             case 1:
                                 // Send message to all users
+                                string temp = (string)messageData.message;
+                                messageData.message = String.Format("[{0}] says \'{1}\'.", messageData.name, temp);
                                 HandleGlobalMessageSend(client, messageData);
                                 break;
                             case 2:

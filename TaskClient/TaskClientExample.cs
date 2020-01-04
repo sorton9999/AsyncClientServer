@@ -184,26 +184,6 @@ namespace TaskClient
                 {
                     Console.WriteLine("Empty Message.");
                 }
-                /*
-                var eventData = GetDataAsync.GetMessageDataAsync(getter, (long)_clientSocket.Handle);
-                if (eventData != null && eventData.Result != null && eventData.Result.message != null)
-                {
-                    string message = (string)eventData.Result.message;
-                    if (String.Compare(message, "exit", true) == 0)
-                    {
-                        done = true;
-                        message = "I'm exiting.  Goodbye.";
-                    }
-                    data.message = message;
-                    data.id = eventData.Result.id;
-                    var sendResult = SendMessageAsync(data);
-
-                    if (sendResult.Result.Failure)
-                    {
-                        return Result.Fail("There was a problem sending a message to the server.");
-                    }
-                }
-                */
             }
             // Report successful
             return Result.Ok();
