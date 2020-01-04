@@ -11,20 +11,37 @@ namespace TaskClient
         static string _ip = String.Empty;
         static int _port = 0;
 
+        static bool done = false;
+
         static void Main(string[] args)
         {
             ParseArgs(args);
             var res = Runme(new TaskClientExample(_ip, _port));
-            Console.WriteLine("Client Return: {0}", res.Result.Success);
+            Console.WriteLine("Client Return: {0}", res.Success);
+            if (res.Failure)
+            {
+                Console.WriteLine(res.Error);
+            }
             Console.WriteLine("Hit ENTER to Exit...");
             Console.ReadLine();
         }
 
-        static async Task<TcpLib.Result> Runme(TaskClientExample ex)
+        //static async Task<TcpLib.Result> Runme(TaskClientExample ex)
+        static TcpLib.Result Runme(TaskClientExample ex)
         {
-            var res = await ex.SendAndReceiveMessageAsync();
-            Task.WaitAny();
-            return res;
+            ex.Start();
+            while (!done)
+            {
+                System.Threading.Thread.Sleep(1000);
+                if (ex.RunResult != null)
+                {
+                    done = true;
+                }
+            }
+            return ex.RunResult;
+            //var res = await ex.SendAndReceiveMessageAsync();
+            //Task.WaitAny();
+            //return res;
         }
 
         static void ParseArgs(string [] args)

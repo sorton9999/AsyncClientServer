@@ -53,6 +53,8 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TaskClientExample.cs" />
+    <Compile Include="UserDataGetter.cs" />
+    <Compile Include="UserNamesDataGetter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
