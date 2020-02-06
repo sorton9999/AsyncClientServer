@@ -317,7 +317,12 @@ namespace TaskClient
             using (var ms = new MemoryStream())
             {
                 var bf = new BinaryFormatter();
-                bf.Serialize(ms, obj);
+                try
+                {
+                    bf.Serialize(ms, obj);
+                }
+                catch (Exception)
+                { }
                 return ms.ToArray();
             }
         }
@@ -334,7 +339,12 @@ namespace TaskClient
                 var bf = new BinaryFormatter();
                 //ms.Write(byteArr, 0, byteArr.Length);
                 //ms.Seek(0, SeekOrigin.Begin);
-                obj = (U)bf.Deserialize(ms);
+                try
+                {
+                    obj = (U)bf.Deserialize(ms);
+                }
+                catch (Exception)
+                { }
             }
             return obj;
         }

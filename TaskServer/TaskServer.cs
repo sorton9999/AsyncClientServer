@@ -106,6 +106,7 @@ namespace TaskServer
                 msg.response = false;
                 msg.message = String.Format("[{0}] has left.", messageData.name);
                 HandleGlobalMessageSend(client, msg);
+                ClientStore.RemoveClient(client.ClientHandle);
             }
             catch (Exception ex)
             {
