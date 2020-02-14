@@ -126,7 +126,8 @@ namespace TaskClient
             }
             if (reset)
             {
-                await ResetAsync();
+                // Don't await here.  We want to exit this method before the reset finishes.
+                ResetAsync();
             }
             Console.WriteLine("ReceiveHandler Returning.");
             return Result.Ok();
@@ -141,6 +142,7 @@ namespace TaskClient
 
                // Put a little delay in then restart
                System.Threading.Thread.Sleep(5000);
+               Console.WriteLine("Client Resetting...");
 
                done = false;
                reset = false;
@@ -192,7 +194,12 @@ namespace TaskClient
 
         private async void SendHandler(object obj)
         {
-            sndResult = await SendAndConnectMessageAsync();
+            try
+            {
+                sndResult = await SendAndConnectMessageAsync();
+            }
+            catch (Exception)
+            { }
             Task.WaitAny();
         }
 
