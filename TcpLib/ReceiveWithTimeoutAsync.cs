@@ -33,7 +33,21 @@ namespace TcpLib
                 try
                 {
                     var asyncResult = socket.BeginReceive(buffer, offset, size, socketFlags, null, null);
-                    var receiveTask = Task<int>.Factory.FromAsync(asyncResult, _ => socket.EndReceive(asyncResult));
+                    var receiveTask = Task<int>.Factory.FromAsync(asyncResult, (s) =>
+                    {
+                        try
+                        {
+                            return socket.EndReceive(s);
+                        }
+                        catch (SocketException se)
+                        {
+                            throw se;
+                        }
+                        catch (Exception e)
+                        {
+                            return -1;
+                        }
+                    });
 
                     if (receiveTask == await Task.WhenAny(receiveTask, Task.Delay(timeoutMs)).ConfigureAwait(false))
                     {
@@ -53,7 +67,8 @@ namespace TcpLib
                 {
                     if (sendException)
                     {
-                        return Result.Fail<int>($"{ex.Message} ({ex.GetType()})");
+                        //return Result.Fail<int>($"{ex.Message} ({ex.GetType()})");
+                        throw;
                     }
                 }
                 catch (TimeoutException ex)

@@ -11,12 +11,15 @@ namespace TaskClient
         static string _ip = String.Empty;
         static int _port = 0;
 
-        static bool done = false;
+        static bool _done = false;
+        static bool _reset = false;
 
         static void Main(string[] args)
         {
             ParseArgs(args);
-            var res = Runme(new TaskClientExample(_ip, _port));
+            TaskClientExample ex = new TaskClientExample(_ip, _port);
+            ex.ResetEvent += Ex_ResetEvent;
+            var res = Runme(ex);
             Console.WriteLine("Client Return: {0}", res.Success);
             if (res.Failure)
             {
@@ -26,16 +29,24 @@ namespace TaskClient
             Console.ReadLine();
         }
 
+        private static void Ex_ResetEvent(bool reset)
+        {
+            _reset = reset;
+        }
+
         //static async Task<TcpLib.Result> Runme(TaskClientExample ex)
         static TcpLib.Result Runme(TaskClientExample ex)
         {
             ex.Start();
-            while (!done)
+            while (!_done)
             {
                 System.Threading.Thread.Sleep(1000);
-                if (ex.RunResult != null)
+                if (!_reset)
                 {
-                    done = true;
+                    if (ex.RunResult != null)
+                    {
+                        _done = true;
+                    }
                 }
             }
             return ex.RunResult;
