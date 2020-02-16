@@ -34,7 +34,6 @@ namespace TaskClient
             _reset = reset;
         }
 
-        //static async Task<TcpLib.Result> Runme(TaskClientExample ex)
         static TcpLib.Result Runme(TaskClientExample ex)
         {
             ex.Start();
@@ -50,9 +49,6 @@ namespace TaskClient
                 }
             }
             return ex.RunResult;
-            //var res = await ex.SendAndReceiveMessageAsync();
-            //Task.WaitAny();
-            //return res;
         }
 
         static void ParseArgs(string [] args)

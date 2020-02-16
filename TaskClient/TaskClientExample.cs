@@ -10,6 +10,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using TcpLib;
 
 namespace TaskClient
@@ -117,7 +118,6 @@ namespace TaskClient
                     done = true;
                     reset = true;
                     ResetEvent?.Invoke(true);
-                    //await TcpLib.TcpLibExtensions.SendBufferAsync(_clientSocket, new byte[1], 0, 1, SocketFlags.None, new CancellationToken());
                 }
                 catch (Exception e)
                 {
@@ -143,9 +143,9 @@ namespace TaskClient
                // Put a little delay in then restart
                System.Threading.Thread.Sleep(5000);
                Console.WriteLine("Client Resetting...");
+               Console.WriteLine("Waiting for Server.");
 
                done = false;
-               reset = false;
                rcvThread = new System.Threading.Thread(new System.Threading.ParameterizedThreadStart(ReceiveHandler));
                sndThread = new System.Threading.Thread(new System.Threading.ParameterizedThreadStart(SendHandler));
                _clientSocket = null;
@@ -222,16 +222,19 @@ namespace TaskClient
             _clientSocket = connectResult.Value;
 
             // Register a name for this client
+            if (reset)
+            {
+                Console.WriteLine("<<< Reset detected.  Hit ENTER before typing name. >>>");
+                reset = false;
+            }
             Console.Write("Enter a Name: ");
             name = Console.ReadLine();
             MessageData sendData = new MessageData();
             sendData.name = name;
-            DataGetter getter = new DataGetter();
             MessageData eventData = null;
             while (!done)
             {
                 // Reset connection vars.
-                //reset = false;
                 ResetEvent?.Invoke(false);
                 sndResult = null;
                 rcvResult = null;
@@ -255,7 +258,7 @@ namespace TaskClient
                         var sendResult = await SendMessageAsync(sendData);
                         if (sendResult.Failure)
                         {
-                            return sendResult; //Result.Fail("There was a problem sending a message to the server.");
+                            return sendResult;
                         }
                     }
                     else
@@ -378,13 +381,14 @@ namespace TaskClient
                     getter = new UserNamesDataGetter();
                     break;
                 case "4":
-                    GetFileAndSend();
+                    GetFileAndSendAsync();
                     break;
                 case "10":
                     // Greeting message
                     getter = new DataGetter();
                     // Tell the getter that it's a greeting message
                     getter.SetData(true);
+
                     break;
                 case "q":
                 case "Q":
@@ -416,9 +420,85 @@ namespace TaskClient
             return null;
         }
 
-        private void GetFileAndSend()
+        private async void GetFileAndSendAsync()
         {
+            // Send information about the file to be sent
+            MessageData msgData = new MessageData();
 
+            // Pick the file to send.  This calls up a file chooser.
+            string fileStr = ShowFileDialog();
+            Console.WriteLine("Selected File: " + fileStr);
+
+            // Split the file from the path
+            string filePath = ""; 
+            string fileName = fileStr.Replace("\\", "//");
+            while (fileName.IndexOf("//") > -1) 
+            { 
+                filePath += fileName.Substring(0, fileName.IndexOf("//") + 2);
+                fileName = fileName.Substring(fileName.IndexOf("//") + 2);
+            }
+
+            // Get the data from the file as an array of bytes
+            byte[] fileData = File.ReadAllBytes(filePath + fileName);
+
+            // Package up information about the file to be sent in a separate message
+            msgData.handle = (long)_clientSocket.Handle;
+            msgData.id = 100;
+            msgData.length = fileData.Length;
+            msgData.name = name;
+            msgData.message = fileName;
+            msgData.response = false;
+
+            // Send the first message about file info
+            var result = await SendMessageAsync(msgData);
+
+            Console.WriteLine("File Send: " + result.Value);
+            Console.WriteLine((result.Success ? "SUCCESS" : "FAIL"));
+
+            // Give some time for the server to process the initial info
+            System.Threading.Thread.Sleep(1000);
+
+            // Send the file data across
+            result = await SendMessageAsync(fileData);
+
+            Console.WriteLine("File Send: " + result.Value);
+            Console.WriteLine((result.Success ? "SUCCESS" : "FAIL"));
+        }
+
+        public static string ShowFileDialog()
+        {
+            // Throw up a file chooser dialog in its own thread
+            string selectedPath = String.Empty;
+            var t = new Thread((ThreadStart)(() =>
+            {
+                // Create a form to use as the owner of the dialog.
+                // Position it in the center of the screen.
+                using (var owner = new Form()
+                {
+                    Width = 0,
+                    Height = 0,
+                    StartPosition = FormStartPosition.CenterScreen,
+                    Text = "Browse for Folder"
+                })
+                {
+                    owner.Show();
+                    owner.BringToFront();
+                    OpenFileDialog ofd = new OpenFileDialog
+                    {
+                        InitialDirectory = ".",
+                        Title = "Select a File"
+                    };
+                    if (ofd.ShowDialog(owner) == DialogResult.OK)
+                    {
+                        selectedPath = ofd.FileName;
+                    }
+                }
+            }));
+            t.SetApartmentState(ApartmentState.STA);
+            t.Start();
+
+            t.Join();
+            return selectedPath;
         }
 
         private void PrintMenu()
@@ -478,8 +558,6 @@ namespace TaskClient
             using (var ms = new MemoryStream(byteArr))
             {
                 var bf = new BinaryFormatter();
-                //ms.Write(byteArr, 0, byteArr.Length);
-                //ms.Seek(0, SeekOrigin.Begin);
                 try
                 {
                     obj = (U)bf.Deserialize(ms);

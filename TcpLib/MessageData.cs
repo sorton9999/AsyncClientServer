@@ -11,6 +11,7 @@ namespace TcpLib
     {
         public int id = 0;
         public long handle = 0;
+        public long length = 0;
         public string name = String.Empty;
         public bool response = false;
         public object message = null;

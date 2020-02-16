@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -27,6 +28,28 @@ namespace TaskServer
 
         // Are we done?
         bool done = false;
+
+        // We are receiving a file
+        bool receivingFile = false;
+
+        // Byte array copy offset
+        int offset = 0;
+
+        // The size of the received file
+        long fileSize = 0;
+
+        // Total bytes received
+        private long totalRcv = 0;
+
+        // The byte stream of file data
+        private byte[] fileData = null;
+
+        // The name of the received file
+        private string fileName = String.Empty;
+
+        // Receive file data as a byte stream
+        private MemoryStream memStream = null;
+        private BinaryWriter binWriter = null;
 
 
         public TaskServer()
@@ -59,7 +82,7 @@ namespace TaskServer
                             Console.WriteLine("\tFrom Client: {0}", data.clientHandle);
 
                             // It's a string message, so just print it out for now.
-                            Console.WriteLine("[{0}]: {1} ", messageData.name, messageData.message);
+                            Console.WriteLine("[{0}]: {1} ", messageData.name, ((messageData.message is string) ? messageData.message : ((messageData.message as byte[]).Length + " bytes")));
                         }
 
                         switch (messageData.id)
@@ -85,12 +108,69 @@ namespace TaskServer
                             case 10:
                                 HandleGetUserName(client, messageData);
                                 break;
+                            case 100:
+                                HandleFile(client, messageData);
+                                break;
                             default:
                                 Console.WriteLine("Unsupported Message Type: " + messageData.id);
                                 break;
                         }
                     }
                 }
+            }
+        }
+
+        private void HandleFile(Client client, MessageData messageData)
+        {
+            if (receivingFile)
+            {
+                byte[] fData = new byte[messageData.length];
+                Buffer.BlockCopy((byte[])messageData.message, offset, fData, 0, (int)messageData.length);
+                totalRcv += fData.Length;
+                binWriter.Write(fData);
+                if (totalRcv >= fileSize)
+                {
+                    receivingFile = false;
+                    if (fileSize == (fileData.Length - 28))
+                    {
+                        Console.WriteLine("Received File: " + fileName);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Send File Mismatch - Expect: [{0}], Actual: [{1}]", fileSize, totalRcv);
+                    }
+                    try
+                    {
+                        string path = "C:\\Users\\steve\\test\\";
+                        using (FileStream fsStream = new FileStream(path + fileName, FileMode.Create))
+                        using (BinaryWriter writer = new BinaryWriter(fsStream, Encoding.UTF8))
+                        {
+                            writer.Write(fileData, 27, fileData.Length - 28);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Exception caught in process: {0}", ex);
+                    }
+
+                }
+                else
+                {
+                    Console.WriteLine("Total Received [{0}] out of [{1}]", totalRcv, fileSize);
+                }
+            }
+            else
+            {
+                Console.WriteLine("Receiving File: " + messageData.message);
+                Console.WriteLine("Size: " + messageData.length);
+                receivingFile = true;
+                fileName = (string)messageData.message;
+                fileSize = messageData.length;
+                totalRcv = 0;
+                fileData = new byte[fileSize + 28];
+                memStream = new MemoryStream(fileData);
+                binWriter = new BinaryWriter(memStream);
+                memStream.Position = 0;
             }
         }
 

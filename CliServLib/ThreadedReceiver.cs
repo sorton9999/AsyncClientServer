@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
@@ -25,6 +26,19 @@ namespace CliServLib
         public event AsyncCompletedEventHandler ClientDataReceived;
 
         /// <summary>
+        /// Receiving a file.  Set this to true until all contents received.
+        /// </summary>
+        private bool receivingFile = false;
+
+        /// <summary>
+        /// File size of the receiving file
+        /// </summary>
+        private long fileSize = 0;
+        private long totalRcv = 0;
+        MessageData fileMsg = new MessageData();
+
+
+        /// <summary>
         /// The server's data receive event caller.
         /// </summary>
         /// <param name="e">Asynchronous event args</param>
@@ -42,18 +56,38 @@ namespace CliServLib
             ClientDataReceived?.Invoke(this, e);
         }
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
         public ThreadedReceiver()
            : base()
         {
             StartParam(new ParameterizedThreadStart(ReceiveLoop));
         }
 
+        /// <summary>
+        /// Public access to the receiving thread
+        /// </summary>
         public Thread ReceiveThread
         {
             get { return theThread; }
             private set { theThread = value; }
         }
 
+        /// <summary>
+        /// We are receiving a file when TRUE
+        /// </summary>
+        public bool ReceivingFile
+        {
+            get { return receivingFile; }
+            private set { receivingFile = value; }
+        }
+
+        /// <summary>
+        /// Main receive loop.  This loops until the LoopDone is TRUE.
+        /// The work is done in ClientReceive.
+        /// </summary>
+        /// <param name="arg"></param>
         public void ReceiveLoop(object arg)
         {
             Client client = arg as Client;
@@ -77,6 +111,12 @@ namespace CliServLib
             }
         }
 
+        /// <summary>
+        /// The work done on the receive loop.  It assumes we are receiving MessageData types unless
+        /// a MessageData received indicates a file to be received.  Then it switches over to receiving
+        /// byte[].
+        /// </summary>
+        /// <param name="client">The client data is received from</param>
         private void ClientReceive(Client client)
         {
             if ((client == null) || (client.ClientSocket == null))
@@ -101,8 +141,21 @@ namespace CliServLib
                     System.Diagnostics.Debug.WriteLine("Receiving Data From Client: {0}", client.ClientSocket.Handle);
                     try
                     {
-                        var value = ClientData<MessageData>.DeserializeFromByteArray<MessageData>(client.ClientData());
-                        rcvData.clientData = value;
+                        MessageData value = null;
+                        if (receivingFile)
+                        {
+                            value = fileMsg;
+                            value.message = client.ClientData();
+                            value.length = res.Result.Value;
+                            rcvData.clientData = fileMsg;
+                            totalRcv += res.Result.Value;
+                            System.Diagnostics.Debug.WriteLine("Received: Size:[{0}] - [{1}] out of [{2}]", res.Result.Value, totalRcv, fileSize);
+                        }
+                        else
+                        {
+                            value = ClientData<MessageData>.DeserializeFromByteArray<MessageData>(client.ClientData());
+                            rcvData.clientData = value;
+                        }
                         rcvData.clientHandle = (long)client.ClientSocket.Handle;
 
                         if (value != null)
@@ -115,6 +168,24 @@ namespace CliServLib
                             }
                             else
                             {
+                                if (rcvData.clientData.id == 100)
+                                {
+                                    if (!receivingFile)
+                                    {
+                                        receivingFile = true;
+                                        fileSize = rcvData.clientData.length;
+                                        fileMsg.handle = rcvData.clientData.handle;
+                                        fileMsg.id = rcvData.clientData.id;
+                                        fileMsg.name = rcvData.clientData.name;
+                                        fileMsg.response = rcvData.clientData.response;
+                                    }
+                                    else if (totalRcv >= fileSize)
+                                    {
+                                        receivingFile = false;
+                                        totalRcv = 0;
+                                        Console.WriteLine("Received all file.");
+                                    }
+                                }
                                 // Server received
                                 OnServerDataReceived(new AsyncCompletedEventArgs(null, false, rcvData));
                             }
