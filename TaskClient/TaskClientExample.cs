@@ -429,6 +429,12 @@ namespace TaskClient
             string fileStr = ShowFileDialog();
             Console.WriteLine("Selected File: " + fileStr);
 
+            // Check for user cancellation
+            if (String.IsNullOrEmpty(fileStr))
+            {
+                return;
+            }
+
             // Split the file from the path
             string filePath = ""; 
             string fileName = fileStr.Replace("\\", "//");

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29230.47
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncServer", "AsyncServer\AsyncServer.csproj", "{6795B74B-89C4-4CBE-A0A0-CEEC2C9A2812}"
 EndProject
@@ -15,17 +15,22 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskServer", "TaskServer\Ta
 	ProjectSection(ProjectDependencies) = postProject
 		{32C9300F-B915-4ABB-AC59-332EDE767F01} = {32C9300F-B915-4ABB-AC59-332EDE767F01}
 		{A6C36C44-694E-4F46-8E58-ED6D2737A346} = {A6C36C44-694E-4F46-8E58-ED6D2737A346}
+		{1F69DBF9-7816-4F2E-915C-0AE944C9CED3} = {1F69DBF9-7816-4F2E-915C-0AE944C9CED3}
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskClient", "TaskClient\TaskClient.csproj", "{4961FED1-2C78-4275-A091-7CBC84A4C983}"
 	ProjectSection(ProjectDependencies) = postProject
 		{32C9300F-B915-4ABB-AC59-332EDE767F01} = {32C9300F-B915-4ABB-AC59-332EDE767F01}
+		{A6C36C44-694E-4F46-8E58-ED6D2737A346} = {A6C36C44-694E-4F46-8E58-ED6D2737A346}
+		{1F69DBF9-7816-4F2E-915C-0AE944C9CED3} = {1F69DBF9-7816-4F2E-915C-0AE944C9CED3}
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CliServLib", "CliServLib\CliServLib.csproj", "{A6C36C44-694E-4F46-8E58-ED6D2737A346}"
 	ProjectSection(ProjectDependencies) = postProject
 		{32C9300F-B915-4ABB-AC59-332EDE767F01} = {32C9300F-B915-4ABB-AC59-332EDE767F01}
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskCommon", "TaskCommon\TaskCommon.csproj", "{1F69DBF9-7816-4F2E-915C-0AE944C9CED3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -61,6 +66,10 @@ Global
 		{A6C36C44-694E-4F46-8E58-ED6D2737A346}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A6C36C44-694E-4F46-8E58-ED6D2737A346}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A6C36C44-694E-4F46-8E58-ED6D2737A346}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F69DBF9-7816-4F2E-915C-0AE944C9CED3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F69DBF9-7816-4F2E-915C-0AE944C9CED3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F69DBF9-7816-4F2E-915C-0AE944C9CED3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F69DBF9-7816-4F2E-915C-0AE944C9CED3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

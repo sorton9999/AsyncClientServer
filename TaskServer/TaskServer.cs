@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using TcpLib;
+using TaskCommon;
 
 
 namespace TaskServer
@@ -51,9 +52,27 @@ namespace TaskServer
         private MemoryStream memStream = null;
         private BinaryWriter binWriter = null;
 
+        private const string FILE_DIR = "TempFiles";
+
+        private string filesPath = String.Empty;
+
+        private MessageHandler messageHandler = new MessageHandler();
+        private FileMessageImpl fileImp = new FileMessageImpl();
+
 
         public TaskServer()
         {
+            // For any file transfers, put them in a known default location
+            try
+            {
+                filesPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                filesPath += "\\" + FILE_DIR + "\\";
+                System.IO.Directory.CreateDirectory(filesPath);
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
             ThreadedReceiver.ServerDataReceived += ThreadedReceiver_ServerDataReceived;
             listenerThread.OnClientConnect += ListenerThread_OnClientConnect;
             clients = new CliServLib.ClientStore();
@@ -85,35 +104,43 @@ namespace TaskServer
                             Console.WriteLine("[{0}]: {1} ", messageData.name, ((messageData.message is string) ? messageData.message : ((messageData.message as byte[]).Length + " bytes")));
                         }
 
-                        switch (messageData.id)
+                        MessageTypesEnum msgType = MessageTypesEnum.MSG_TYPE_UNINIT;
+                        bool success = Enum.TryParse(messageData.id.ToString(), out msgType);
+
+                        if (success)
                         {
-                            case 99:
-                                // Client Exit
-                                HandleClientExit(client, messageData);
-                                break;
-                            case 1:
-                                // Send message to all users
-                                string temp = (string)messageData.message;
-                                messageData.message = String.Format("[{0}] says \'{1}\'.", messageData.name, temp);
-                                HandleGlobalMessageSendAsync(client, messageData);
-                                break;
-                            case 2:
-                                // Send message to specific user
-                                HandleUserMessageSendAsync(client, messageData);
-                                break;
-                            case 3:
-                                // Get all user names and send to asking client
-                                GetAllUsersAsync(client, messageData);
-                                break;
-                            case 10:
-                                HandleGetUserName(client, messageData);
-                                break;
-                            case 100:
-                                HandleFile(client, messageData);
-                                break;
-                            default:
-                                Console.WriteLine("Unsupported Message Type: " + messageData.id);
-                                break;
+
+                            switch (msgType)
+                            {
+                                case MessageTypesEnum.CLIENT_EXIT_MSG_TYPE:
+                                    // Client Exit
+                                    HandleClientExit(client, messageData);
+                                    break;
+                                case MessageTypesEnum.GLOBAL_MSG_TYPE:
+                                    // Send message to all users
+                                    string temp = (string)messageData.message;
+                                    messageData.message = String.Format("[{0}] says \'{1}\'.", messageData.name, temp);
+                                    HandleGlobalMessageSendAsync(client, messageData);
+                                    break;
+                                case MessageTypesEnum.USER_MSG_TYPE:
+                                    // Send message to specific user
+                                    HandleUserMessageSendAsync(client, messageData);
+                                    break;
+                                case MessageTypesEnum.ALL_USERS_MSG_TYPE:
+                                    // Get all user names and send to asking client
+                                    GetAllUsersAsync(client, messageData);
+                                    break;
+                                case MessageTypesEnum.GET_USERS_MSG_TYPE:
+                                    HandleGetUserName(client, messageData);
+                                    break;
+                                case MessageTypesEnum.FILE_MSG_TYPE:
+                                    messageHandler.Handle(client, messageData, fileImp, null);
+                                    //HandleFile(client, messageData);
+                                    break;
+                                default:
+                                    Console.WriteLine("Unsupported Message Type: " + messageData.id);
+                                    break;
+                            }
                         }
                     }
                 }
@@ -141,7 +168,8 @@ namespace TaskServer
                     }
                     try
                     {
-                        string path = "C:\\Users\\steve\\test\\";
+                        //string path = "C:\\Users\\steve\\test\\";
+                        string path = filesPath;
                         using (FileStream fsStream = new FileStream(path + fileName, FileMode.Create))
                         using (BinaryWriter writer = new BinaryWriter(fsStream, Encoding.UTF8))
                         {

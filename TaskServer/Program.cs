@@ -12,7 +12,16 @@ namespace TaskServer
         {
             //var res = Runme(new TaskServerExample());
             //Console.WriteLine("Server Return: {0}", res.Result.Success);
-            TaskServer server = new TaskServer();
+            TaskServer server = null;
+            try
+            {
+                server = new TaskServer();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Server Exception: " + e.Message);
+                return;
+            }
             ConsoleKeyInfo keyInfo = new ConsoleKeyInfo();
             while (!server.ClientsAllDone())// && keyInfo.Modifiers != ConsoleModifiers.Control && keyInfo.Key != ConsoleKey.C)
             {
