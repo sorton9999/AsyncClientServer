@@ -30,49 +30,13 @@ namespace TaskServer
         // Are we done?
         bool done = false;
 
-        // We are receiving a file
-        bool receivingFile = false;
-
-        // Byte array copy offset
-        int offset = 0;
-
-        // The size of the received file
-        long fileSize = 0;
-
-        // Total bytes received
-        private long totalRcv = 0;
-
-        // The byte stream of file data
-        private byte[] fileData = null;
-
-        // The name of the received file
-        private string fileName = String.Empty;
-
-        // Receive file data as a byte stream
-        private MemoryStream memStream = null;
-        private BinaryWriter binWriter = null;
-
-        private const string FILE_DIR = "TempFiles";
-
-        private string filesPath = String.Empty;
-
+        // The message handler object used to perform actions using Impl objects
         private MessageHandler messageHandler = new MessageHandler();
-        private FileMessageImpl fileImp = new FileMessageImpl();
 
 
         public TaskServer()
         {
             // For any file transfers, put them in a known default location
-            try
-            {
-                filesPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-                filesPath += "\\" + FILE_DIR + "\\";
-                System.IO.Directory.CreateDirectory(filesPath);
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
             ThreadedReceiver.ServerDataReceived += ThreadedReceiver_ServerDataReceived;
             listenerThread.OnClientConnect += ListenerThread_OnClientConnect;
             clients = new CliServLib.ClientStore();
@@ -109,96 +73,50 @@ namespace TaskServer
 
                         if (success)
                         {
+                            IMessageImpl msgImpl = MessageImplFactory.Instance().MakeMessageImpl(msgType);
 
-                            switch (msgType)
+                            if (msgImpl != default(IMessageImpl))
                             {
-                                case MessageTypesEnum.CLIENT_EXIT_MSG_TYPE:
-                                    // Client Exit
-                                    HandleClientExit(client, messageData);
-                                    break;
-                                case MessageTypesEnum.GLOBAL_MSG_TYPE:
-                                    // Send message to all users
-                                    string temp = (string)messageData.message;
-                                    messageData.message = String.Format("[{0}] says \'{1}\'.", messageData.name, temp);
-                                    HandleGlobalMessageSendAsync(client, messageData);
-                                    break;
-                                case MessageTypesEnum.USER_MSG_TYPE:
-                                    // Send message to specific user
-                                    HandleUserMessageSendAsync(client, messageData);
-                                    break;
-                                case MessageTypesEnum.ALL_USERS_MSG_TYPE:
-                                    // Get all user names and send to asking client
-                                    GetAllUsersAsync(client, messageData);
-                                    break;
-                                case MessageTypesEnum.GET_USERS_MSG_TYPE:
-                                    HandleGetUserName(client, messageData);
-                                    break;
-                                case MessageTypesEnum.FILE_MSG_TYPE:
-                                    messageHandler.Handle(client, messageData, fileImp, null);
-                                    //HandleFile(client, messageData);
-                                    break;
-                                default:
-                                    Console.WriteLine("Unsupported Message Type: " + messageData.id);
-                                    break;
+                                messageHandler.Handle(client, messageData, msgImpl, null);
+
+                            }
+                            else
+                            { 
+                                switch (msgType)
+                                {
+                                    case MessageTypesEnum.CLIENT_EXIT_MSG_TYPE:
+                                        // Client Exit
+                                        HandleClientExit(client, messageData);
+                                        break;
+                                    case MessageTypesEnum.GLOBAL_MSG_TYPE:
+                                        // Send message to all users
+                                        string temp = (string)messageData.message;
+                                        messageData.message = String.Format("[{0}] says \'{1}\'.", messageData.name, temp);
+                                        HandleGlobalMessageSendAsync(client, messageData);
+                                        break;
+                                    case MessageTypesEnum.USER_MSG_TYPE:
+                                        // Send message to specific user
+                                        HandleUserMessageSendAsync(client, messageData);
+                                        break;
+                                    case MessageTypesEnum.ALL_USERS_MSG_TYPE:
+                                        // Get all user names and send to asking client
+                                        GetAllUsersAsync(client, messageData);
+                                        break;
+                                    case MessageTypesEnum.GET_USERS_MSG_TYPE:
+                                        HandleGetUserName(client, messageData);
+                                        break;
+                                    case MessageTypesEnum.FILE_MSG_TYPE:
+                                        //messageHandler.Handle(client, messageData, msgImpl, null);
+                                        //HandleFile(client, messageData);
+                                        break;
+                                    default:
+                                        Console.WriteLine("Unsupported Message Type: " + messageData.id);
+                                        break;
+                                }
                             }
                         }
                     }
                 }
-            }
-        }
-
-        private void HandleFile(Client client, MessageData messageData)
-        {
-            if (receivingFile)
-            {
-                byte[] fData = new byte[messageData.length];
-                Buffer.BlockCopy((byte[])messageData.message, offset, fData, 0, (int)messageData.length);
-                totalRcv += fData.Length;
-                binWriter.Write(fData);
-                if (totalRcv >= fileSize)
-                {
-                    receivingFile = false;
-                    if (fileSize == (fileData.Length - 28))
-                    {
-                        Console.WriteLine("Received File: " + fileName);
-                    }
-                    else
-                    {
-                        Console.WriteLine("Send File Mismatch - Expect: [{0}], Actual: [{1}]", fileSize, totalRcv);
-                    }
-                    try
-                    {
-                        //string path = "C:\\Users\\steve\\test\\";
-                        string path = filesPath;
-                        using (FileStream fsStream = new FileStream(path + fileName, FileMode.Create))
-                        using (BinaryWriter writer = new BinaryWriter(fsStream, Encoding.UTF8))
-                        {
-                            writer.Write(fileData, 27, fileData.Length - 28);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine("Exception caught in process: {0}", ex);
-                    }
-
-                }
-                else
-                {
-                    Console.WriteLine("Total Received [{0}] out of [{1}]", totalRcv, fileSize);
-                }
-            }
-            else
-            {
-                Console.WriteLine("Receiving File: " + messageData.message);
-                Console.WriteLine("Size: " + messageData.length);
-                receivingFile = true;
-                fileName = (string)messageData.message;
-                fileSize = messageData.length;
-                totalRcv = 0;
-                fileData = new byte[fileSize + 28];
-                memStream = new MemoryStream(fileData);
-                binWriter = new BinaryWriter(memStream);
-                memStream.Position = 0;
             }
         }
 
