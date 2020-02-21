@@ -19,13 +19,13 @@ namespace TaskServer
     public class TaskServer
     {
         // Listener
-        private CliServLib.ThreadedListener listenerThread = new CliServLib.ThreadedListener();
+        private readonly CliServLib.ThreadedListener listenerThread = new CliServLib.ThreadedListener();
 
         // Store User Names associated with its client handle
-        private Dictionary<long, string> ClientHandleToUserName = new Dictionary<long, string>();
+        private readonly Dictionary<long, string> clientHandleToUserName = new Dictionary<long, string>();
 
         // Container of Clients
-        CliServLib.ClientStore clients;
+        private CliServLib.ClientStore clients;
 
         // Are we done?
         bool done = false;
@@ -41,6 +41,17 @@ namespace TaskServer
             listenerThread.OnClientConnect += ListenerThread_OnClientConnect;
             clients = new CliServLib.ClientStore();
             listenerThread.Run(clients);
+        }
+
+        public Dictionary<long, string> ClientHandleToUserName
+        {
+            get { return clientHandleToUserName; }
+        }
+
+        public MessageHandler MessageHandler
+        {
+            get { return messageHandler; }
+            private set { messageHandler = value; }
         }
 
         private void ListenerThread_OnClientConnect(Client client)
@@ -77,42 +88,7 @@ namespace TaskServer
 
                             if (msgImpl != default(IMessageImpl))
                             {
-                                messageHandler.Handle(client, messageData, msgImpl, null);
-
-                            }
-                            else
-                            { 
-                                switch (msgType)
-                                {
-                                    case MessageTypesEnum.CLIENT_EXIT_MSG_TYPE:
-                                        // Client Exit
-                                        HandleClientExit(client, messageData);
-                                        break;
-                                    case MessageTypesEnum.GLOBAL_MSG_TYPE:
-                                        // Send message to all users
-                                        string temp = (string)messageData.message;
-                                        messageData.message = String.Format("[{0}] says \'{1}\'.", messageData.name, temp);
-                                        HandleGlobalMessageSendAsync(client, messageData);
-                                        break;
-                                    case MessageTypesEnum.USER_MSG_TYPE:
-                                        // Send message to specific user
-                                        HandleUserMessageSendAsync(client, messageData);
-                                        break;
-                                    case MessageTypesEnum.ALL_USERS_MSG_TYPE:
-                                        // Get all user names and send to asking client
-                                        GetAllUsersAsync(client, messageData);
-                                        break;
-                                    case MessageTypesEnum.GET_USERS_MSG_TYPE:
-                                        HandleGetUserName(client, messageData);
-                                        break;
-                                    case MessageTypesEnum.FILE_MSG_TYPE:
-                                        //messageHandler.Handle(client, messageData, msgImpl, null);
-                                        //HandleFile(client, messageData);
-                                        break;
-                                    default:
-                                        Console.WriteLine("Unsupported Message Type: " + messageData.id);
-                                        break;
-                                }
+                                messageHandler.Handle(client, messageData, msgImpl, this);
                             }
                         }
                     }
@@ -120,183 +96,7 @@ namespace TaskServer
             }
         }
 
-        private void HandleClientExit(Client client, MessageData messageData)
-        {
-            try
-            {
-                ClientHandleToUserName.Remove(client.ClientHandle);
-                MessageData msg = new MessageData();
-                msg.handle = messageData.handle;
-                msg.id = 1;
-                msg.name = messageData.name;
-                msg.response = false;
-                msg.message = String.Format("[{0}] has left.", messageData.name);
-                HandleGlobalMessageSendAsync(client, msg);
-                ClientStore.RemoveClient(client.ClientHandle);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Client Handle Remove Exception: " + ex.Message);
-            }
-        }
-
-        private void HandleGetUserName(Client client, MessageData messageData)
-        {
-            Console.WriteLine("Handle User Name Register.");
-
-            try
-            {
-                // Register the name
-                ClientHandleToUserName.Add(client.ClientHandle, (string)messageData.name);
-
-                MessageData msg = new MessageData();
-                msg.handle = messageData.handle;
-                msg.id = 1;
-                msg.name = messageData.name;
-                msg.response = false;
-                msg.message = String.Format("[{0}] has joined and says \'{1}\'.", messageData.name, messageData.message);
-                HandleGlobalMessageSendAsync(client, msg);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Client already registered a Name?: " + e.Message);
-            }
-        }
-
-        private async void HandleGlobalMessageSendAsync(Client client, MessageData messageData)
-        {
-            Console.WriteLine("Handling Global Send.");
-            Client curClient = null;
-            // Must do the operation async because an action is performed on each
-            // client.  This may take a long time if there are many clients.
-            await Task.Factory.StartNew(() =>
-           {
-               while ((curClient = ClientStore.NextClient()) != null)
-               {
-                   if (curClient.ClientHandle == client.ClientHandle)
-                   {
-                       continue;
-                   }
-                   var res = SendMessageAsync(curClient, messageData);
-                   if (res.Result.Failure)
-                   {
-                       Console.WriteLine("There is a problem sending data out to the client.");
-                   }
-               }
-           });
-        }
-
-        private async void HandleUserMessageSendAsync(Client client, MessageData messageData)
-        {
-            Console.WriteLine("Handling Specific User Send.");
-            // Must do the operation async because a search is done for a specific
-            // client. This may take a long time if there are many clients.
-            await Task.Factory.StartNew(() =>
-           {
-                // Do a reverse lookup for name of client to send message to
-               string name = String.Empty;
-               string message = String.Empty;
-               string[] parts = (messageData.message as string).Split(':');
-               if (parts.Length > 1)
-               {
-                   name = parts[0].Trim();
-                   message = parts[1].Trim();
-               }
-               if (!String.IsNullOrEmpty(name))
-               {
-                   try
-                   {
-                       if (!ClientHandleToUserName.ContainsValue(name))
-                       {
-                           string msg = String.Format("This name [{0}] is not registered", name);
-                           Console.WriteLine(msg);
-
-                           // Send back to original sender
-                           MessageData send = new MessageData();
-                           send.handle = client.ClientHandle;
-                           send.id = messageData.id;
-                           send.message = msg;
-                           send.name = messageData.name;
-                           send.response = true;
-                           var res = SendMessageAsync(client, send);
-                           if (res.Result.Failure)
-                           {
-                               Console.WriteLine("There is a problem sending data out to specific user.");
-                           }
-                       }
-                       var myKey = ClientHandleToUserName.FirstOrDefault(x => x.Value == name).Key;
-                       Client found = ClientStore.FindClient(myKey);
-                       if (found != null)
-                       {
-                           MessageData sendMsg = new MessageData();
-                           sendMsg.handle = client.ClientHandle;
-                           sendMsg.id = messageData.id;
-                           sendMsg.message = String.Format("[{0}] says \'{1}\'", messageData.name, message);
-                           sendMsg.name = name;
-                           sendMsg.response = false;
-                           var res = SendMessageAsync(found, sendMsg);
-                           if (res.Result.Failure)
-                           {
-                               Console.WriteLine("There is a problem sending data out to specific user.");
-                           }
-                       }
-                   }
-                   catch (Exception e)
-                   {
-                       Console.WriteLine("Message Send Exception: " + e.Message);
-                   }
-               }
-           });
-        }
-
-        private async void GetAllUsersAsync(Client client, MessageData messageData)
-        {
-            Console.WriteLine("Handling Get All Users.");
-            // This is async since it may take some time to gather all the
-            // client names if the list is large.
-            await Task.Factory.StartNew(() =>
-           {
-               MessageData sendMsg = new MessageData();
-               sendMsg.handle = client.ClientHandle;
-               sendMsg.id = messageData.id;
-               sendMsg.name = messageData.name;
-               sendMsg.response = false;
-               StringBuilder buffer = new StringBuilder();
-               buffer.AppendLine("Users:");
-               foreach (var item in ClientHandleToUserName)
-               {
-                   buffer.AppendFormat("[{0}] ", item.Value);
-               }
-               sendMsg.message = buffer.ToString();
-
-               var res = SendMessageAsync(client, sendMsg);
-               if (res.Result.Failure)
-               {
-                   Console.WriteLine("There is a problem sending data out to specific user.");
-               }
-           });
-        }
-
-        private void GetUserName(Client client)
-        {
-            MessageData data = new MessageData();
-            data.id = 10;
-            data.message = "Get User Name";
-            data.response = false;
-            data.handle = client.ClientHandle;
-
-            var res = SendMessageAsync(client, data);
-            if (res.IsFaulted || res.IsCanceled || res.Result.Failure)
-            {
-                Console.WriteLine("Send Name Message Failed: " + res.Result.Error);
-            }
-        }
-
-        //public void ReceiveData(MessageData data)
-        //{
-        //    Console.WriteLine("Received Message of Type: {0}", data.id);
-        //}
-        public async Task<Result<string>> SendMessageAsync(Client client, object message)
+        public static async Task<Result<string>> SendMessageAsync(Client client, object message)
         {
             // Encode a string message before sending it to the server
             var messageData = ClientData<MessageData>.SerializeToByteArray(message);
@@ -333,29 +133,6 @@ namespace TaskServer
                     listenerThread.StopLoopAction.Invoke();
                 }
             }
-        }
-
-        public static void ClientReceiveThread(object sender, AsyncCompletedEventArgs e)
-        {
-            // This is a problem without a GUI thread.  There is no easy way to check to
-            // see if the Invoke is possible so it's commented out as a placeholder.
-            //if (this.InvokeRequired)
-            //{
-            //    BeginInvoke(new AsyncCompletedEventHandler(ClientReceiveThread),
-            //        new object[] { sender, e });
-            //}
-            //else
-            //{
-                if (e.Error == null)
-                {
-                    //string message = e.UserState as string;
-                    MessageData message = e.UserState as MessageData;
-                    if (message != null)
-                    {
-                        Console.WriteLine("[{0}]: {1}", message.name, message.message);
-                    }
-                }
-            //}
         }
 
         public bool ClientsAllDone()

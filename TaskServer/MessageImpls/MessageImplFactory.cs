@@ -29,33 +29,50 @@ namespace TaskServer
         public IMessageImpl MakeMessageImpl(MessageTypesEnum msgType)
         {
             IMessageImpl impl = default(IMessageImpl);
+            bool found = false;
 
             if (implStore.ContainsKey(msgType))
             {
-                bool found = implStore.TryGetValue(msgType, out impl);
+                found = implStore.TryGetValue(msgType, out impl);
             }
             else
             {
                 switch (msgType)
                 {
                     case MessageTypesEnum.ALL_USERS_MSG_TYPE:
+                        impl = new AllUsersMessageImpl();
                         break;
                     case MessageTypesEnum.CLIENT_EXIT_MSG_TYPE:
+                        impl = new ExitMessageImpl();
                         break;
                     case MessageTypesEnum.FILE_MSG_TYPE:
                         impl = new FileMessageImpl();
-                        implStore.Add(msgType, impl);
                         break;
                     case MessageTypesEnum.GET_USERS_MSG_TYPE:
+                        impl = new GetUserNameMessageImpl();
                         break;
                     case MessageTypesEnum.GLOBAL_MSG_TYPE:
+                        impl = new GlobalMessageImpl();
                         break;
                     case MessageTypesEnum.USER_MSG_TYPE:
+                        impl = new UserMessageImpl();
                         break;
                     case MessageTypesEnum.MSG_TYPE_UNINIT:
                     default:
+                        Console.WriteLine("Unsupported Message Type: " + msgType);
                         break;
                 }
+            }
+            try
+            {
+                if (!found)
+                {
+                    implStore.Add(msgType, impl);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("ImplFactory Exception: " + e.Message);
             }
             return impl;
         }

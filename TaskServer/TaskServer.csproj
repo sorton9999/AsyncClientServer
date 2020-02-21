@@ -52,13 +52,18 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DataGetter.cs" />
-    <Compile Include="FileMessageImpl.cs" />
-    <Compile Include="MessageImplFactory.cs" />
+    <Compile Include="MessageImpls\AllUsersMessageImpl.cs" />
+    <Compile Include="DataGetters\DataGetter.cs" />
+    <Compile Include="MessageImpls\ExitMessageImpl.cs" />
+    <Compile Include="MessageImpls\FileMessageImpl.cs" />
+    <Compile Include="MessageImpls\GetUserNameMessageImpl.cs" />
+    <Compile Include="MessageImpls\GlobalMessageImpl.cs" />
+    <Compile Include="MessageImpls\MessageImplFactory.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TaskServer.cs" />
     <Compile Include="TaskServerExample.cs" />
+    <Compile Include="MessageImpls\UserMessageImpl.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

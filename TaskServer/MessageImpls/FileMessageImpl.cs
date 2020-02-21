@@ -12,6 +12,8 @@ namespace TaskServer
 {
     public class FileMessageImpl : IMessageImpl
     {
+        private TaskServer _server = null;
+
         private bool receivingFile = false;
 
         private long totalRcv = 0;
@@ -111,10 +113,11 @@ namespace TaskServer
 
         public void SetActionData(object data)
         {
-            if (data != null)
-            {
-                receivingFile = (bool)data;
-            }
+            //if (data != null)
+            //{
+            //    receivingFile = (bool)data;
+            //}
+            _server = data as TaskServer;
         }
 
     }

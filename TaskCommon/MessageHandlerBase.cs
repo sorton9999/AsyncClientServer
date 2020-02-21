@@ -10,7 +10,7 @@ namespace TaskCommon
 {
     public abstract class MessageHandlerBase : IMessageHandler
     {
-        private object lockObj = new object();
+        //private object lockObj = new object();
         private MessageTypesEnum _messageType;
 
         protected MessageHandlerBase()
@@ -31,15 +31,15 @@ namespace TaskCommon
                 return false;
             }
             bool retVal = false;
-            lock (lockObj)
-            {
+            //lock (lockObj)
+            //{
                 //IMessageHandler handler = GetMessageHandler();
                 //if (handler != default(IMessageHandler))
                 //{
                     SetHandlerData(handlerArgs, action);
                     retVal = HandleMessage(client, message, action);
                 //}
-            }
+            //}
             return retVal;
         }
 
