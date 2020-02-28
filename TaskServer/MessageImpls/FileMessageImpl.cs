@@ -56,59 +56,80 @@ namespace TaskServer
         public bool PerformAction(Client client, MessageData messageData)
         {
             bool retVal = true;
-            if (receivingFile)
-            {
-                byte[] fData = new byte[messageData.length];
-                Buffer.BlockCopy((byte[])messageData.message, offset, fData, 0, (int)messageData.length);
-                totalRcv += fData.Length;
-                binWriter.Write(fData);
-                if (totalRcv >= fileSize)
-                {
-                    receivingFile = false;
-                    if (fileSize == (fileData.Length - 28))
-                    {
-                        Console.WriteLine("Received File: " + fileName);
-                    }
-                    else
-                    {
-                        Console.WriteLine("Send File Mismatch - Expect: [{0}], Actual: [{1}]", fileSize, totalRcv);
-                    }
-                    try
-                    {
-                        //string path = "C:\\Users\\steve\\test\\";
-                        string path = filesPath;
-                        using (FileStream fsStream = new FileStream(path + fileName, FileMode.Create))
-                        using (BinaryWriter writer = new BinaryWriter(fsStream, Encoding.UTF8))
-                        {
-                            writer.Write(fileData, 27, fileData.Length - 28);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine("Exception caught in process: {0}", ex);
-                        retVal = false;
-                    }
 
-                }
-                else
-                {
-                    Console.WriteLine("Total Received [{0}] out of [{1}]", totalRcv, fileSize);
-                }
-            }
-            else
+            try
             {
-                Console.WriteLine("Receiving File: " + messageData.message);
-                Console.WriteLine("Size: " + messageData.length);
-                receivingFile = true;
-                fileName = (string)messageData.message;
-                fileSize = messageData.length;
-                totalRcv = 0;
-                fileData = new byte[fileSize + 28];
-                memStream = new MemoryStream(fileData);
-                binWriter = new BinaryWriter(memStream);
-                memStream.Position = 0;
+                HandleFileDataAsync(client, messageData);
             }
+            catch (Exception e)
+            {
+                Console.WriteLine("File Message Exception: " + e.Message);
+                retVal = false;
+            }
+
             return retVal;
+        }
+
+        private async void HandleFileDataAsync(Client client, MessageData messageData)
+        {
+            await Task.Factory.StartNew( () =>
+           {
+
+               if (receivingFile)
+               {
+                   byte[] fData = new byte[messageData.length];
+                   Buffer.BlockCopy((byte[])messageData.message, offset, fData, 0, (int)messageData.length);
+                   totalRcv += fData.Length;
+                   binWriter.Write(fData);
+                   if (totalRcv >= fileSize)
+                   {
+                       receivingFile = false;
+                       if (fileSize == (fileData.Length - 28))
+                       {
+                           Console.WriteLine("Received File: " + fileName);
+                       }
+                       else
+                       {
+                           Console.WriteLine("Send File Mismatch - Expect: [{0}], Actual: [{1}]", fileSize, totalRcv);
+                       }
+                       try
+                       {
+                           //string path = "C:\\Users\\steve\\test\\";
+                           string path = filesPath;
+                           using (FileStream fsStream = new FileStream(path + fileName, FileMode.Create))
+                           using (BinaryWriter writer = new BinaryWriter(fsStream, Encoding.UTF8))
+                           {
+                               writer.Write(fileData, 27, fileData.Length - 28);
+                           }
+                       }
+                       catch (Exception ex)
+                       {
+                           Console.WriteLine("Exception caught in process: {0}", ex);
+                           //retVal = false;
+                       }
+
+                   }
+                   else
+                   {
+                       Console.WriteLine("Total Received [{0}] out of [{1}]", totalRcv, fileSize);
+                   }
+               }
+               else
+               {
+                   Console.WriteLine("Receiving File: " + messageData.message);
+                   Console.WriteLine("Size: " + messageData.length);
+                   receivingFile = true;
+                   fileName = (string)messageData.message;
+                   fileSize = messageData.length;
+                   totalRcv = 0;
+                   fileData = new byte[fileSize + 28];
+                   memStream = new MemoryStream(fileData);
+                   binWriter = new BinaryWriter(memStream);
+                   memStream.Position = 0;
+               }
+
+
+           }).ConfigureAwait(false);
         }
 
         public void SetActionData(object data)
