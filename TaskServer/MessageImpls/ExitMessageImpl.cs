@@ -15,17 +15,18 @@ namespace TaskServer
 
         public bool PerformAction(Client client, MessageData messageData)
         {
-            bool retVal = true;
+            bool retVal = false;
 
             try
             {
-                HandleClientExit(client, messageData);
+                retVal = HandleClientExit(client, messageData);
             }
             catch (Exception e)
             {
                 Console.WriteLine("Exit Message Exception: " + e.Message);
                 retVal = false;
             }
+            Console.WriteLine("Client [{0}] has exited [{1}]", client.ClientHandle, (retVal ? "cleanly" : "with errors"));
 
             return retVal;
         }
@@ -35,12 +36,11 @@ namespace TaskServer
             _server = data as TaskServer;
         }
 
-        private void HandleClientExit(Client client, MessageData messageData)
+        private bool HandleClientExit(Client client, MessageData messageData)
         {
             bool handleExit = false;
             try
             {
-                _server.ClientHandleToUserName.Remove(client.ClientHandle);
                 MessageData msg = new MessageData();
                 msg.handle = messageData.handle;
                 msg.id = 1;
@@ -51,20 +51,25 @@ namespace TaskServer
                 if (impl != default(IMessageImpl))
                 {
                     handleExit = _server.MessageHandler.Handle(client, msg, impl, _server);
-                    //HandleGlobalMessageSendAsync(client, msg);
                 }
                 if (handleExit)
                 {
+                    // Remove client handle record keeping
+                    var remHandle = _server.ClientHandleToUserName.Remove(client.ClientHandle);
                     // Remove the client impls
-                    MessageImplFactory.Instance().RemoveClient(client.ClientHandle);
+                    var remImpl = MessageImplFactory.Instance().RemoveClient(client.ClientHandle);
                     // Remove the client object
-                    ClientStore.RemoveClient(client.ClientHandle);
+                    var remClient = ClientStore.RemoveClient(client.ClientHandle);
+
+                    return (remHandle && remImpl && remClient);
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Client Handle Remove Exception: " + ex.Message);
+                handleExit = false;
             }
+            return handleExit;
         }
     }
 }
