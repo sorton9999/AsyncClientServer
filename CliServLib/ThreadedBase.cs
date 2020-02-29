@@ -17,6 +17,7 @@ namespace CliServLib
         protected CommsLoop looper;// = new CommsLoop();
         //private Result response = Result.Fail("Not Initialized");
         private Result response = Result.Ok();
+        private CancellationTokenSource cancelSource = new CancellationTokenSource();
 
         protected ThreadedBase()
         {
@@ -31,6 +32,12 @@ namespace CliServLib
         //    stopAction = new Action(StopLoop);
         //    callback = func;
         //}
+
+        public CancellationTokenSource CancelSource
+        {
+            get { return cancelSource; }
+            protected set { cancelSource = value; }
+        }
 
         protected void InitStart(Func<object, Result> func)
         {
@@ -101,8 +108,10 @@ namespace CliServLib
                     }
                     else
                     {
-                        // It's blocked.  Trying to cancel gracefully.
+                        // Just Interrupt
+                        theThread.Interrupt();
                     }
+                    CancelSource.Cancel();
                 }
                 catch (Exception)
                 {

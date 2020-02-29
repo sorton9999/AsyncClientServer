@@ -36,32 +36,42 @@ namespace CliServLib
             ClientStore clients = arg as ClientStore;
             if (clients != null)
             {
-                while (!loopDone)
+                while (!looper.LoopDone)
                 {
-                    var res = ServerListenAsync();
-                    if (res.IsFaulted || (res.Result == null))
+                    try
                     {
-                        Console.WriteLine("Problem with connection.");
+                        var res = ServerListenAsync();
+                        if (res.IsFaulted || (res.Result == null))
+                        {
+                            Console.WriteLine("Problem with connection.");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Accepted Client Connection on port: {0}", CliServDefaults.DfltPort);
+                            Client client = new Client(res.Result, CliServDefaults.BufferSize, dataGetter);
+                            try
+                            {
+                                // Start the service loops
+                                client.Start();
+                                ClientStore.AddClient(client, client.ClientHandle);
+                                OnClientConnect?.Invoke(client);
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine("Client Add to List Exception: {0}", e.Message);
+                            }
+                        }
                     }
-                    else
+                    catch (Exception e)
                     {
-                        Console.WriteLine("Accepted Client Connection on port: {0}", CliServDefaults.DfltPort);
-                        Client client = new Client(res.Result, CliServDefaults.BufferSize, dataGetter);
-                        try
-                        {
-                            // Start the service loops
-                            client.Start();
-                            ClientStore.AddClient(client, client.ClientHandle);
-                            OnClientConnect?.Invoke(client);
-                        }
-                        catch (Exception e)
-                        {
-                            Console.WriteLine("Client Add to List Exception: {0}", e.Message);
-                        }
+                        Console.WriteLine(e.Message);
                     }
                 }
-                _listenSocket.Shutdown(SocketShutdown.Both);
-                _listenSocket.Close();
+                if (_listenSocket.Connected)
+                {
+                    _listenSocket.Shutdown(SocketShutdown.Both);
+                    _listenSocket.Close();
+                }
                 Console.WriteLine("Listener Done.");
             }
         }
@@ -105,7 +115,7 @@ namespace CliServLib
         private async Task<Result<Socket>> AcceptConnectionTaskAsync()
         {
             Console.WriteLine("Waiting to Accept Connection from a Client...");
-            return await _listenSocket.AcceptAsync().ConfigureAwait(false);
+            return await _listenSocket.AcceptAsync(CancelSource.Token).ConfigureAwait(false);
         }
 
     }

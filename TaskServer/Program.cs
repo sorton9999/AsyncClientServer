@@ -10,8 +10,6 @@ namespace TaskServer
     {
         static void Main(string[] args)
         {
-            //var res = Runme(new TaskServerExample());
-            //Console.WriteLine("Server Return: {0}", res.Result.Success);
             TaskServer server = null;
             try
             {
@@ -23,9 +21,8 @@ namespace TaskServer
                 return;
             }
             ConsoleKeyInfo keyInfo = new ConsoleKeyInfo();
-            while (!server.ClientsAllDone())// && keyInfo.Modifiers != ConsoleModifiers.Control && keyInfo.Key != ConsoleKey.C)
+            while (!server.ClientsAllDone() && !server.AllClientsRemoved)
             {
-                //System.Threading.Thread.Sleep(200);
                 keyInfo = Console.ReadKey();
                 if (keyInfo.Modifiers == ConsoleModifiers.Control && keyInfo.Key == ConsoleKey.X)
                 {
@@ -39,9 +36,7 @@ namespace TaskServer
                 }
             }
             return;
-            //Console.WriteLine("Hit ENTER to Exit...");
-            //Console.ReadLine();
-        }
+       }
 
         static async Task<TcpLib.Result> Runme(TaskServerExample ex)
         {

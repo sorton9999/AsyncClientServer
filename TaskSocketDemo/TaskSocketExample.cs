@@ -48,6 +48,7 @@ namespace TaskSocketDemo
                 await _clientSocket.ConnectWithTimeoutAsync(
             ipAddress.ToString(),
             serverPort,
+            ListenTypeEnum.ListenTypeDelay,
             ConnectTimeoutMs).ConfigureAwait(false);
 
             // Step 4: Await the result of the ServerAcceptTask
@@ -77,6 +78,7 @@ namespace TaskSocketDemo
             0,
             messageData.Length,
             0,
+            SendTypeEnum.SendTypeDelay,
             SendTimeoutMs).ConfigureAwait(false);
 
             // Step 9: Await the result of ServerReceiveBytesTask
@@ -115,6 +117,7 @@ namespace TaskSocketDemo
             0,
             BufferSize,
             0,
+            ReceiveTypeEnum.ReceiveTypeDelay,
             ReceiveTimeoutMs).ConfigureAwait(false);
 
             var bytesReceived = receiveResult.Value;

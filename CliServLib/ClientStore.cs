@@ -67,14 +67,20 @@ namespace CliServLib
             return clientStore[keys[curIdx]];
         }
 
-        public static void RemoveAllClients()
+        public static bool RemoveAllClients()
         {
+            bool retVal = false;
             foreach (var client in clientStore.ToList())
             {
                 client.Value.Stop();
                 //client.Value.Dispose();
                 clientStore.Remove(client.Key);
             }
+            if (clientStore.Count == 0)
+            {
+                retVal = true;
+            }
+            return retVal;
         }
 
         public static bool StopAll()

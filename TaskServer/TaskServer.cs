@@ -36,11 +36,17 @@ namespace TaskServer
 
         public TaskServer()
         {
-            // For any file transfers, put them in a known default location
+            AllClientsRemoved = false;
             ThreadedReceiver.ServerDataReceived += ThreadedReceiver_ServerDataReceived;
             listenerThread.OnClientConnect += ListenerThread_OnClientConnect;
             clients = new CliServLib.ClientStore();
             listenerThread.Run(clients);
+        }
+
+        public bool AllClientsRemoved
+        {
+            get;
+            private set;
         }
 
         public Dictionary<long, string> ClientHandleToUserName
@@ -142,7 +148,7 @@ namespace TaskServer
 
         public void RemoveAllClients()
         {
-            CliServLib.ClientStore.RemoveAllClients();
+            AllClientsRemoved = CliServLib.ClientStore.RemoveAllClients();
         }
     }
 }
