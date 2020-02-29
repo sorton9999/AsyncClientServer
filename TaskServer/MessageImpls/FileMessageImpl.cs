@@ -18,6 +18,7 @@ namespace TaskServer
 
         private long totalRcv = 0;
         private int offset = 0;
+        private const int HDR_SIZE = 28;
 
         // The size of the received file
         long fileSize = 0;
@@ -77,6 +78,11 @@ namespace TaskServer
 
                if (receivingFile)
                {
+                   // The receive block.
+                   // Keep putting the received data together until all received, then write it out.
+                   //
+                   // TODO -- Add the ability to send data to another client
+                   //
                    byte[] fData = new byte[messageData.length];
                    Buffer.BlockCopy((byte[])messageData.message, offset, fData, 0, (int)messageData.length);
                    totalRcv += fData.Length;
@@ -84,7 +90,7 @@ namespace TaskServer
                    if (totalRcv >= fileSize)
                    {
                        receivingFile = false;
-                       if (fileSize == (fileData.Length - 28))
+                       if (fileSize == (fileData.Length - HDR_SIZE))
                        {
                            Console.WriteLine("Received File: " + fileName);
                        }
@@ -94,18 +100,21 @@ namespace TaskServer
                        }
                        try
                        {
-                           //string path = "C:\\Users\\steve\\test\\";
+                           // Create the file and write out the data
+                           //
+                           // TODO -- Write out this data to another client
+                           //
                            string path = filesPath;
                            using (FileStream fsStream = new FileStream(path + fileName, FileMode.Create))
                            using (BinaryWriter writer = new BinaryWriter(fsStream, Encoding.UTF8))
                            {
-                               writer.Write(fileData, 27, fileData.Length - 28);
+                               // Had to deal with the 28 byte header
+                               writer.Write(fileData, (HDR_SIZE - 1), fileData.Length - HDR_SIZE);
                            }
                        }
                        catch (Exception ex)
                        {
                            Console.WriteLine("Exception caught in process: {0}", ex);
-                           //retVal = false;
                        }
 
                    }
@@ -116,13 +125,15 @@ namespace TaskServer
                }
                else
                {
+                   // First message gets the file info, including the name and file size.  This will set the
+                   // flag to true so the upper block will take over to receive the actual file data.
                    Console.WriteLine("Receiving File: " + messageData.message);
                    Console.WriteLine("Size: " + messageData.length);
                    receivingFile = true;
                    fileName = (string)messageData.message;
                    fileSize = messageData.length;
                    totalRcv = 0;
-                   fileData = new byte[fileSize + 28];
+                   fileData = new byte[fileSize + HDR_SIZE];
                    memStream = new MemoryStream(fileData);
                    binWriter = new BinaryWriter(memStream);
                    memStream.Position = 0;
@@ -134,10 +145,6 @@ namespace TaskServer
 
         public void SetActionData(object data)
         {
-            //if (data != null)
-            //{
-            //    receivingFile = (bool)data;
-            //}
             _server = data as TaskServer;
         }
 
