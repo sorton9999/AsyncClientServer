@@ -50,7 +50,7 @@ namespace TaskServer
                 msg.name = messageData.name;
                 msg.response = false;
                 msg.message = String.Format("[{0}] has joined and says \'{1}\'.", messageData.name, messageData.message);
-                IMessageImpl impl = MessageImplFactory.Instance().MakeMessageImpl(MessageTypesEnum.GLOBAL_MSG_TYPE);
+                IMessageImpl impl = MessageImplFactory.Instance().MakeMessageImpl(MessageTypesEnum.GLOBAL_MSG_TYPE, client.ClientHandle);
                 if (impl != default(IMessageImpl))
                 {
                     _server.MessageHandler.Handle(client, msg, impl, _server);

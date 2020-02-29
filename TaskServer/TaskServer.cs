@@ -79,12 +79,12 @@ namespace TaskServer
                             Console.WriteLine("[{0}]: {1} ", messageData.name, ((messageData.message is string) ? messageData.message : ((messageData.message as byte[]).Length + " bytes")));
                         }
 
-                        MessageTypesEnum msgType = MessageTypesEnum.MSG_TYPE_UNINIT;
+                        MessageTypesEnum msgType;
                         bool success = Enum.TryParse(messageData.id.ToString(), out msgType);
 
                         if (success)
                         {
-                            IMessageImpl msgImpl = MessageImplFactory.Instance().MakeMessageImpl(msgType);
+                            IMessageImpl msgImpl = MessageImplFactory.Instance().MakeMessageImpl(msgType, client.ClientHandle);
 
                             if (msgImpl != default(IMessageImpl))
                             {

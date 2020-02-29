@@ -37,6 +37,7 @@ namespace TaskServer
 
         private void HandleClientExit(Client client, MessageData messageData)
         {
+            bool handleExit = false;
             try
             {
                 _server.ClientHandleToUserName.Remove(client.ClientHandle);
@@ -46,13 +47,19 @@ namespace TaskServer
                 msg.name = messageData.name;
                 msg.response = false;
                 msg.message = String.Format("[{0}] has left.", messageData.name);
-                IMessageImpl impl = MessageImplFactory.Instance().MakeMessageImpl(MessageTypesEnum.GLOBAL_MSG_TYPE);
+                IMessageImpl impl = MessageImplFactory.Instance().MakeMessageImpl(MessageTypesEnum.GLOBAL_MSG_TYPE, client.ClientHandle);
                 if (impl != default(IMessageImpl))
                 {
-                    _server.MessageHandler.Handle(client, msg, impl, _server);
+                    handleExit = _server.MessageHandler.Handle(client, msg, impl, _server);
                     //HandleGlobalMessageSendAsync(client, msg);
                 }
-                ClientStore.RemoveClient(client.ClientHandle);
+                if (handleExit)
+                {
+                    // Remove the client impls
+                    MessageImplFactory.Instance().RemoveClient(client.ClientHandle);
+                    // Remove the client object
+                    ClientStore.RemoveClient(client.ClientHandle);
+                }
             }
             catch (Exception ex)
             {

@@ -101,7 +101,7 @@ namespace TaskClient
                 try
                 {
                     var rcvRes = await ReceiveMessageAsync();
-                    Task.WaitAny();
+                    //Task.WaitAny();
                     if (rcvRes.Success && (rcvRes.Value != null))
                     {
                         HandleMessages(rcvRes.Value);
