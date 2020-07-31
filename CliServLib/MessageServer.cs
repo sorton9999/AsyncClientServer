@@ -1,21 +1,14 @@
-﻿using CliServLib;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Sockets;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using TcpLib;
+using System.ComponentModel;
 
-
-namespace TaskServer
+namespace CliServLib
 {
-
-    public class TaskServer
+    public class MessageServer
     {
         // Listener
         private readonly CliServLib.ThreadedListener listenerThread = new CliServLib.ThreadedListener();
@@ -32,8 +25,11 @@ namespace TaskServer
         // The message handler object used to perform actions using Impl objects
         private MessageHandler messageHandler = new MessageHandler();
 
+        // The factory to make MsgImpls
+        private IMessageImplFactory msgFactory;
 
-        public TaskServer()
+
+        public MessageServer()
         {
             AllClientsRemoved = false;
             ThreadedReceiver.ServerDataReceived += ThreadedReceiver_ServerDataReceived;
@@ -89,7 +85,7 @@ namespace TaskServer
 
                         if (success)
                         {
-                            IMessageImpl msgImpl = MessageImplFactory.Instance().MakeMessageImpl(msgType, client.ClientHandle);
+                            IMessageImpl msgImpl = msgFactory.MakeMessageImpl(msgType, client.ClientHandle);
 
                             if (msgImpl != default(IMessageImpl))
                             {

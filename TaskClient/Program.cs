@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CliServLib;
 
 namespace TaskClient
 {
@@ -17,7 +18,8 @@ namespace TaskClient
         static void Main(string[] args)
         {
             ParseArgs(args);
-            TaskClientExample ex = new TaskClientExample(_ip, _port);
+            //TaskClientExample ex = new TaskClientExample(_ip, _port);
+            MessageClient ex = new MessageClient("192.168.56.1", CliServDefaults.DfltPort, "TestClient");
             ex.ResetEvent += Ex_ResetEvent;
             var res = Runme(ex);
             Console.WriteLine("Client Return: {0}", res.Success);
@@ -34,7 +36,8 @@ namespace TaskClient
             _reset = reset;
         }
 
-        static TcpLib.Result Runme(TaskClientExample ex)
+        //       static TcpLib.Result Runme(TaskClientExample ex)
+        static TcpLib.Result Runme(MessageClient ex)
         {
             ex.Start();
             while (!_done)

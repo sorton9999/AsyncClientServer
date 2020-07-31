@@ -115,7 +115,7 @@ namespace CliServLib
         private async Task<Result<Socket>> AcceptConnectionTaskAsync()
         {
             Console.WriteLine("Waiting to Accept Connection from a Client...");
-            return await _listenSocket.AcceptAsync(CancelSource.Token).ConfigureAwait(false);
+            return await _listenSocket.TaskAcceptAsync(CancelSource.Token).ConfigureAwait(false);
         }
 
     }

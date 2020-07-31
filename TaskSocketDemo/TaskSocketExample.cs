@@ -103,7 +103,7 @@ namespace TaskSocketDemo
 
         async Task<Result<Socket>> AcceptConnectionTask()
         {
-            return await _listenSocket.AcceptAsync().ConfigureAwait(false);
+            return await _listenSocket.TaskAcceptAsync().ConfigureAwait(false);
         }
 
         async Task<Result<string>> ReceiveMessageAsync()

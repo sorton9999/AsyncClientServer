@@ -8,7 +8,7 @@ namespace TcpLib
 
     public static partial class TcpLibExtensions
     {
-        public static async Task<Result<Socket>> AcceptAsync(this Socket socket)
+        public static async Task<Result<Socket>> TaskAcceptAsync(this Socket socket)
         {
             Socket transferSocket;
             try
@@ -32,7 +32,7 @@ namespace TcpLib
             return Result.Ok(transferSocket);
         }
 
-        public static async Task<Result<Socket>> AcceptAsync(this Socket socket, CancellationToken cancelToken)
+        public static async Task<Result<Socket>> TaskAcceptAsync(this Socket socket, CancellationToken cancelToken)
         {
             Socket transferSocket;
             try

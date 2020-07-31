@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using TaskCommon;
+using CliServLib;
 
 namespace TaskServer
 {
-    public class MessageImplFactory
+    public class MessageImplFactory : IMessageImplFactory
     {
         private object lockObj = new object();
 
@@ -103,7 +103,7 @@ namespace TaskServer
             return retVal;
         }
 
-        private IMessageImpl GetMessageImpl(MessageTypesEnum msgType)
+        public IMessageImpl GetMessageImpl(MessageTypesEnum msgType)
         {
             IMessageImpl impl = default(IMessageImpl);
             switch (msgType)

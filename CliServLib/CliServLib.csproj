@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CliServLib</RootNamespace>
     <AssemblyName>CliServLib</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
     <TargetFrameworkProfile />
@@ -52,6 +52,14 @@
     <Compile Include="CliServDefaults.cs" />
     <Compile Include="CommsLoop.cs" />
     <Compile Include="DefaultDataGetter.cs" />
+    <Compile Include="MessageClient.cs" />
+    <Compile Include="MessageHandler\IMessageHandler.cs" />
+    <Compile Include="MessageHandler\IMessageImpl.cs" />
+    <Compile Include="MessageHandler\IMessageImplFactory.cs" />
+    <Compile Include="MessageHandler\MessageHandler.cs" />
+    <Compile Include="MessageHandler\MessageHandlerBase.cs" />
+    <Compile Include="MessageHandler\MessageTypes.cs" />
+    <Compile Include="MessageServer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SendMessageAsync.cs" />
     <Compile Include="ServiceController.cs" />
