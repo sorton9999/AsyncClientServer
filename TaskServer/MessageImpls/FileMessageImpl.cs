@@ -11,7 +11,7 @@ namespace TaskServer
 {
     public class FileMessageImpl : IMessageImpl
     {
-        private TaskServer _server = null;
+        private CliServLib.DefaultImpl.TaskServer _server = null;
 
         private bool receivingFile = false;
 
@@ -144,7 +144,7 @@ namespace TaskServer
 
         public void SetActionData(object data)
         {
-            _server = data as TaskServer;
+            _server = data as CliServLib.DefaultImpl.TaskServer;
         }
 
     }

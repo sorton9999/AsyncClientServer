@@ -9,6 +9,17 @@ namespace TaskServer
 {
     public class MessageImplFactory : IMessageImplFactory
     {
+        public enum MessageFactoryTypesEnum
+        {
+            MSG_TYPE_UNINIT = 0,
+            GLOBAL_MSG_TYPE,
+            USER_MSG_TYPE,
+            ALL_USERS_MSG_TYPE,
+            GET_USERS_MSG_TYPE = 10,
+            CLIENT_EXIT_MSG_TYPE = 99,
+            FILE_MSG_TYPE = 100
+        };
+
         private object lockObj = new object();
 
         private static MessageImplFactory _instance = null;
@@ -16,7 +27,7 @@ namespace TaskServer
         // We are storing the impl objects since we will reuse them during
         // the run.  Once an impl is created it stays available and the
         // existing instantiation will be returned.
-        private readonly Dictionary<long, Dictionary<MessageTypesEnum, IMessageImpl>> implStore = new Dictionary<long, Dictionary<MessageTypesEnum, IMessageImpl>>();
+        private readonly Dictionary<long, Dictionary<MessageFactoryTypesEnum, IMessageImpl>> implStore = new Dictionary<long, Dictionary<MessageFactoryTypesEnum, IMessageImpl>>();
 
         public static MessageImplFactory Instance()
         {
@@ -28,20 +39,22 @@ namespace TaskServer
 
         }
 
-        public IMessageImpl MakeMessageImpl(MessageTypesEnum msgType, long clientHandle)
+        public IMessageImpl MakeMessageImpl(int msgType, long clientHandle)
         {
             IMessageImpl impl = default(IMessageImpl);
             bool found = false;
             bool clientFound = false;
+            MessageFactoryTypesEnum msgFactoryType;
+            bool success = Enum.TryParse(msgType.ToString(), out msgFactoryType);
             Console.WriteLine("Getting IMPL for Client: {0}; TASK: {1}", clientHandle, msgType.ToString());
-            Dictionary<MessageTypesEnum, IMessageImpl> client = new Dictionary<MessageTypesEnum, IMessageImpl>();
-            if (implStore.ContainsKey(clientHandle))
+            Dictionary<MessageFactoryTypesEnum, IMessageImpl> client = new Dictionary<MessageFactoryTypesEnum, IMessageImpl>();
+            if (success && implStore.ContainsKey(clientHandle))
             {
-                client = new Dictionary<MessageTypesEnum, IMessageImpl>();
+                client = new Dictionary<MessageFactoryTypesEnum, IMessageImpl>();
                 clientFound = implStore.TryGetValue(clientHandle, out client);
                 if (clientFound)
                 {
-                    found = client.TryGetValue(msgType, out impl);
+                    found = client.TryGetValue(msgFactoryType, out impl);
 
                     Console.WriteLine("Found Client: {0}", clientHandle);
                 }
@@ -62,9 +75,9 @@ namespace TaskServer
                     {
                         if (!clientFound)
                         {
-                            Dictionary<MessageTypesEnum, IMessageImpl> temp = new Dictionary<MessageTypesEnum, IMessageImpl>
+                            Dictionary<MessageFactoryTypesEnum, IMessageImpl> temp = new Dictionary<MessageFactoryTypesEnum, IMessageImpl>
                         {
-                            { msgType, impl }
+                            { msgFactoryType, impl }
                         };
                             implStore.Add(clientHandle, temp);
 
@@ -75,7 +88,7 @@ namespace TaskServer
                             impl = GetMessageImpl(msgType);
                             if (impl != default(IMessageImpl))
                             {
-                                client.Add(msgType, impl);
+                                client.Add(msgFactoryType, impl);
                             }
                             Console.WriteLine("Added Task: {0} to Client: {1}", msgType.ToString(), clientHandle);
                         }
@@ -103,33 +116,38 @@ namespace TaskServer
             return retVal;
         }
 
-        public IMessageImpl GetMessageImpl(MessageTypesEnum msgType)
+        public IMessageImpl GetMessageImpl(int msgType)
         {
             IMessageImpl impl = default(IMessageImpl);
-            switch (msgType)
+            MessageFactoryTypesEnum msgFactoryType;
+            bool success = Enum.TryParse(msgType.ToString(), out msgFactoryType);
+            if (success)
             {
-                case MessageTypesEnum.ALL_USERS_MSG_TYPE:
-                    impl = new AllUsersMessageImpl();
-                    break;
-                case MessageTypesEnum.CLIENT_EXIT_MSG_TYPE:
-                    impl = new ExitMessageImpl();
-                    break;
-                case MessageTypesEnum.FILE_MSG_TYPE:
-                    impl = new FileMessageImpl();
-                    break;
-                case MessageTypesEnum.GET_USERS_MSG_TYPE:
-                    impl = new GetUserNameMessageImpl();
-                    break;
-                case MessageTypesEnum.GLOBAL_MSG_TYPE:
-                    impl = new GlobalMessageImpl();
-                    break;
-                case MessageTypesEnum.USER_MSG_TYPE:
-                    impl = new UserMessageImpl();
-                    break;
-                case MessageTypesEnum.MSG_TYPE_UNINIT:
-                default:
-                    Console.WriteLine("Unsupported Message Type: " + msgType);
-                    break;
+                switch (msgFactoryType)
+                {
+                    case MessageFactoryTypesEnum.ALL_USERS_MSG_TYPE:
+                        impl = new AllUsersMessageImpl();
+                        break;
+                    case MessageFactoryTypesEnum.CLIENT_EXIT_MSG_TYPE:
+                        impl = new ExitMessageImpl();
+                        break;
+                    case MessageFactoryTypesEnum.FILE_MSG_TYPE:
+                        impl = new FileMessageImpl();
+                        break;
+                    case MessageFactoryTypesEnum.GET_USERS_MSG_TYPE:
+                        impl = new GetUserNameMessageImpl();
+                        break;
+                    case MessageFactoryTypesEnum.GLOBAL_MSG_TYPE:
+                        impl = new GlobalMessageImpl();
+                        break;
+                    case MessageFactoryTypesEnum.USER_MSG_TYPE:
+                        impl = new UserMessageImpl();
+                        break;
+                    case MessageFactoryTypesEnum.MSG_TYPE_UNINIT:
+                    default:
+                        Console.WriteLine("Unsupported Message Type: " + msgType);
+                        break;
+                }
             }
             return impl;
         }

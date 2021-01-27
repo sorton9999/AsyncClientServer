@@ -10,17 +10,9 @@ namespace CliServLib
     public abstract class MessageHandlerBase : IMessageHandler
     {
         //private object lockObj = new object();
-        private MessageTypesEnum _messageType;
 
         protected MessageHandlerBase()
         {
-            _messageType = MessageTypesEnum.FILE_MSG_TYPE;
-        }
-
-        public MessageTypesEnum MessageId
-        {
-            get { return _messageType; }
-            private set { _messageType = value; }
         }
 
         public bool Handle(Client client, MessageData message, IMessageImpl action, object handlerArgs)

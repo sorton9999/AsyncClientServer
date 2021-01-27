@@ -15,12 +15,14 @@ namespace CliServLib
         public delegate void ConnectionDel(Client client);
         public event ConnectionDel OnClientConnect;
         bool loopDone = false;
+        bool useLocalhost = false;
         Socket _listenSocket;
         IDataGetter dataGetter;
 
-        public ThreadedListener()
+        public ThreadedListener(bool localhost)
             : base()
         {
+            useLocalhost = localhost;
             dataGetter = new DefaultDataGetter();
             StartParam(new ParameterizedThreadStart(ListenLoop));
         }
@@ -40,7 +42,7 @@ namespace CliServLib
                 {
                     try
                     {
-                        var res = ServerListenAsync();
+                        var res = ServerListenAsync(useLocalhost);
                         if (res.IsFaulted || (res.Result == null))
                         {
                             Console.WriteLine("Problem with connection.");
@@ -76,17 +78,50 @@ namespace CliServLib
             }
         }
 
-        public async Task<Socket> ServerListenAsync()
+        public async Task<Socket> ServerListenAsync(bool useLocalhost = false)
         {
             using (_listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
             {
 
                 var serverPort = CliServLib.CliServDefaults.DfltPort;
-                var ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
+                IPHostEntry ipHostInfo;
+
+                if (useLocalhost)
+                {
+                    ipHostInfo = Dns.GetHostEntry("localhost");
+                }
+                else
+                {
+                    ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
+                }
 
                 var ipAddress =
                 ipHostInfo.AddressList.Select(ip => ip)
                     .FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
+
+                /*
+                IPAddress ipToUse = null;
+                IPAddress[] ips = Dns.GetHostAddresses(Dns.GetHostName());
+
+                if (useLocalhost)
+                {
+                    ips = Dns.GetHostAddresses("localhost");
+                    foreach (IPAddress ip in ips)
+                    {
+                        if (IPAddress.IsLoopback(ip))
+                        {
+                            ipToUse = ip;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    ipToUse =
+                        ipHostInfo.AddressList.Select(address => address)
+                        .FirstOrDefault(address => address.AddressFamily == AddressFamily.InterNetwork);
+                }
+                */
 
                 var ipEndPoint = new IPEndPoint(ipAddress, serverPort);
 

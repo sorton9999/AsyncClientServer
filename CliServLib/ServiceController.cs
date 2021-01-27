@@ -20,9 +20,13 @@ namespace CliServLib
         {
             clientData = new ClientData<T>(size);
             clientData.ClientSocket = clientSocket;
-            if (clientSocket.Connected)
+            if (clientSocket != null && clientSocket.Connected)
             {
                 clientData.State = ClientData<T>.ClientState.CONNECTED;
+            }
+            else
+            {
+                clientData.State = ClientData<T>.ClientState.DISCONNECTED;
             }
             sender = new ThreadedSender();
             receiver = new ThreadedReceiver();
@@ -113,7 +117,17 @@ namespace CliServLib
 
         public long ClientHandle
         {
-            get { return (long)clientData.ClientSocket.Handle; }
+            get
+            {
+                if (clientData.ClientSocket != null)
+                {
+                    return (long)clientData.ClientSocket.Handle;
+                }
+                else
+                {
+                    return 0;
+                }
+            }
         }
 
         public Socket ClientSocket()

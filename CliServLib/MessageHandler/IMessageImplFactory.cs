@@ -8,8 +8,8 @@ namespace CliServLib
 {
     public interface IMessageImplFactory
     {
-        IMessageImpl MakeMessageImpl(MessageTypesEnum msgType, long clientHandle);
+        IMessageImpl MakeMessageImpl(int msgType, long clientHandle);
 
-        IMessageImpl GetMessageImpl(MessageTypesEnum msgType);
+        IMessageImpl GetMessageImpl(int msgType);
     }
 }

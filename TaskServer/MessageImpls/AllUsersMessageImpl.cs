@@ -10,7 +10,7 @@ namespace TaskServer
 {
     public class AllUsersMessageImpl : IMessageImpl
     {
-        TaskServer _server = null;
+        CliServLib.DefaultImpl.TaskServer _server = null;
 
         public bool PerformAction(Client client, MessageData messageData)
         {
@@ -31,7 +31,7 @@ namespace TaskServer
 
         public void SetActionData(object data)
         {
-            _server = data as TaskServer;
+            _server = data as CliServLib.DefaultImpl.TaskServer;
         }
 
         private async void GetAllUsersAsync(Client client, MessageData messageData)
@@ -48,13 +48,13 @@ namespace TaskServer
                 sendMsg.response = false;
                 StringBuilder buffer = new StringBuilder();
                 buffer.AppendLine("Users:");
-                foreach (var item in _server.ClientHandleToUserName)
+                foreach (var item in _server.InternMsgServer.ClientHandleToUserName)
                 {
                     buffer.AppendFormat("[{0}] ", item.Value);
                 }
                 sendMsg.message = buffer.ToString();
 
-                var res = TaskServer.SendMessageAsync(client, sendMsg);
+                var res = CliServLib.MessageServer.SendMessageAsync(client, sendMsg);
                 if (res.Result.Failure)
                 {
                     Console.WriteLine("There is a problem sending data out to specific user.");

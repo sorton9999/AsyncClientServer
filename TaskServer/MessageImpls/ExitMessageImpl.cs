@@ -10,7 +10,7 @@ namespace TaskServer
 {
     public class ExitMessageImpl : IMessageImpl
     {
-        TaskServer _server = null;
+        CliServLib.DefaultImpl.TaskServer _server = null;
 
         public bool PerformAction(Client client, MessageData messageData)
         {
@@ -32,7 +32,7 @@ namespace TaskServer
 
         public void SetActionData(object data)
         {
-            _server = data as TaskServer;
+            _server = data as CliServLib.DefaultImpl.TaskServer;
         }
 
         private bool HandleClientExit(Client client, MessageData messageData)
@@ -46,15 +46,15 @@ namespace TaskServer
                 msg.name = messageData.name;
                 msg.response = false;
                 msg.message = String.Format("[{0}] has left.", messageData.name);
-                IMessageImpl impl = MessageImplFactory.Instance().MakeMessageImpl(MessageTypesEnum.GLOBAL_MSG_TYPE, client.ClientHandle);
+                IMessageImpl impl = MessageImplFactory.Instance().MakeMessageImpl((int)MessageImplFactory.MessageFactoryTypesEnum.GLOBAL_MSG_TYPE, client.ClientHandle);
                 if (impl != default(IMessageImpl))
                 {
-                    handleExit = _server.MessageHandler.Handle(client, msg, impl, _server);
+                    handleExit = _server.InternMsgServer.MessageHandler.Handle(client, msg, impl, _server);
                 }
                 if (handleExit)
                 {
                     // Remove client handle record keeping
-                    var remHandle = _server.ClientHandleToUserName.Remove(client.ClientHandle);
+                    var remHandle = _server.InternMsgServer.ClientHandleToUserName.Remove(client.ClientHandle);
                     // Remove the client impls
                     var remImpl = MessageImplFactory.Instance().RemoveClient(client.ClientHandle);
                     // Remove the client object

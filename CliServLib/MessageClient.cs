@@ -24,9 +24,6 @@ namespace CliServLib
         // My socket
         Socket _clientSocket;
 
-        // Receive/Send threads
-        System.Threading.Thread rcvThread;
-        System.Threading.Thread sndThread;
         // Keep track of last operation result for rec/send
         Result rcvResult;
         Result sndResult;
@@ -40,14 +37,63 @@ namespace CliServLib
         // Are we resetting?
         bool reset = false;
 
+        private MessageHandler msgHandler = new MessageHandler();
+
         public MessageClient(string ip, int port, string clientName)
         {
             _ip = ip;
             _port = port;
             _name = clientName;
 
-            rcvThread = new System.Threading.Thread(new System.Threading.ParameterizedThreadStart(ReceiveHandler));
-            sndThread = new System.Threading.Thread(new System.Threading.ParameterizedThreadStart(SendHandler));
+            ConnectToServer();
+
+            MyClient = new Client(_clientSocket, CliServDefaults.BufferSize);
+            MyClient.Receiver.ClientDataReceived += Receiver_ClientDataReceived;
+        }
+
+        private void Receiver_ClientDataReceived(object sender, System.ComponentModel.AsyncCompletedEventArgs e)
+        {
+            if (e.Error == null)
+            {
+                ReceiveData data = e.UserState as ReceiveData;
+                if (data != null)
+                {
+                    MessageData messageData = data.clientData;
+                    
+                    if (messageData != null && messageData.id > 0)
+                    {
+                        Console.WriteLine("received Message Type: {0}", messageData.id);
+                        if (MyClient != null)
+                        {
+                            Console.WriteLine("\tFrom Client: {0}", data.clientHandle);
+
+                            // It's a string message, so just print it out for now.
+                            Console.WriteLine("[{0}]: {1} ", messageData.name, ((messageData.message is string) ? messageData.message : ((messageData.message as byte[]).Length + " bytes")));
+                        }
+
+                        if (MessageFactory != null)
+                        {
+                            IMessageImpl msgImpl = MessageFactory.MakeMessageImpl(messageData.id, MyClient.ClientHandle);
+
+                            if (msgImpl != default(IMessageImpl))
+                            {
+                                msgHandler.Handle(MyClient, messageData, msgImpl, this);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public Client MyClient
+        {
+            get;
+            private set;
+        }
+
+        public void SetDataGetter(IDataGetter getter)
+        {
+            MyClient.DataGetter = getter;
         }
 
         private async void ReceiveHandler(object obj)
@@ -66,10 +112,15 @@ namespace CliServLib
             get { return rcvResult; }
         }
 
+        public IMessageImplFactory MessageFactory
+        {
+            get;
+            set;
+        }
+
         public void Start()
         {
-            rcvThread.Start();
-            sndThread.Start();
+            MyClient.Start();
         }
 
         private async Task<Result> ReceiveHandlerAsync(object obj)
@@ -129,8 +180,6 @@ namespace CliServLib
                 Console.WriteLine("Waiting for Server.");
 
                 done = false;
-                rcvThread = new System.Threading.Thread(new System.Threading.ParameterizedThreadStart(ReceiveHandler));
-                sndThread = new System.Threading.Thread(new System.Threading.ParameterizedThreadStart(SendHandler));
                 _clientSocket = null;
                 Start();
             }
@@ -188,7 +237,7 @@ namespace CliServLib
 
         public async Task<Result> Connect()
         {
-            if (_clientSocket.Connected)
+            if ((_clientSocket != null) && _clientSocket.Connected)
             {
                 return Result.Ok("Already connected");
             }
@@ -211,6 +260,12 @@ namespace CliServLib
 
             // Report successful
             return Result.Ok();
+        }
+
+        public void ConnectToServer()
+        {
+            var ret = Connect();
+            Console.WriteLine("Connection to Server {0}: {1}", _ip, (ret.Result.Success ? "SUCCESS" : "FAILED"));
         }
 
         public async Task<Result> SendAndConnectMessageAsync()

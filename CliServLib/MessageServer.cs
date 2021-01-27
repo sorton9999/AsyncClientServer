@@ -11,7 +11,7 @@ namespace CliServLib
     public class MessageServer
     {
         // Listener
-        private readonly CliServLib.ThreadedListener listenerThread = new CliServLib.ThreadedListener();
+        private readonly CliServLib.ThreadedListener listenerThread = null;
 
         // Store User Names associated with its client handle
         private readonly Dictionary<long, string> clientHandleToUserName = new Dictionary<long, string>();
@@ -22,16 +22,18 @@ namespace CliServLib
         // Are we done?
         bool done = false;
 
+        // Flag to indicate listen on localhost
+        bool useLocalhost = false;
+
         // The message handler object used to perform actions using Impl objects
         private MessageHandler messageHandler = new MessageHandler();
 
-        // The factory to make MsgImpls
-        private IMessageImplFactory msgFactory;
 
-
-        public MessageServer()
+        public MessageServer(bool localhost)
         {
+            useLocalhost = localhost;
             AllClientsRemoved = false;
+            listenerThread = new CliServLib.ThreadedListener(useLocalhost);
             ThreadedReceiver.ServerDataReceived += ThreadedReceiver_ServerDataReceived;
             listenerThread.OnClientConnect += ListenerThread_OnClientConnect;
             clients = new CliServLib.ClientStore();
@@ -42,6 +44,12 @@ namespace CliServLib
         {
             get;
             private set;
+        }
+
+        public IMessageImplFactory MessageFactory
+        {
+            get;
+            set;
         }
 
         public Dictionary<long, string> ClientHandleToUserName
@@ -80,12 +88,9 @@ namespace CliServLib
                             Console.WriteLine("[{0}]: {1} ", messageData.name, ((messageData.message is string) ? messageData.message : ((messageData.message as byte[]).Length + " bytes")));
                         }
 
-                        MessageTypesEnum msgType;
-                        bool success = Enum.TryParse(messageData.id.ToString(), out msgType);
-
-                        if (success)
+                        if (MessageFactory != null)
                         {
-                            IMessageImpl msgImpl = msgFactory.MakeMessageImpl(msgType, client.ClientHandle);
+                            IMessageImpl msgImpl = MessageFactory.MakeMessageImpl(messageData.id, client.ClientHandle);
 
                             if (msgImpl != default(IMessageImpl))
                             {

@@ -10,7 +10,7 @@ namespace TaskServer
 {
     public class GetUserNameMessageImpl : IMessageImpl
     {
-        TaskServer _server = null;
+        CliServLib.DefaultImpl.TaskServer _server = null;
 
         public bool PerformAction(Client client, MessageData messageData)
         {
@@ -31,7 +31,7 @@ namespace TaskServer
 
         public void SetActionData(object data)
         {
-            _server = data as TaskServer;
+            _server = data as CliServLib.DefaultImpl.TaskServer;
         }
 
         private void HandleGetUserName(Client client, MessageData messageData)
@@ -41,7 +41,7 @@ namespace TaskServer
             try
             {
                 // Register the name
-                _server.ClientHandleToUserName.Add(client.ClientHandle, (string)messageData.name);
+                _server.InternMsgServer.ClientHandleToUserName.Add(client.ClientHandle, (string)messageData.name);
 
                 MessageData msg = new MessageData();
                 msg.handle = messageData.handle;
@@ -49,10 +49,10 @@ namespace TaskServer
                 msg.name = messageData.name;
                 msg.response = false;
                 msg.message = String.Format("[{0}] has joined and says \'{1}\'.", messageData.name, messageData.message);
-                IMessageImpl impl = MessageImplFactory.Instance().MakeMessageImpl(MessageTypesEnum.GLOBAL_MSG_TYPE, client.ClientHandle);
+                IMessageImpl impl = MessageImplFactory.Instance().MakeMessageImpl((int)MessageImplFactory.MessageFactoryTypesEnum.GLOBAL_MSG_TYPE, client.ClientHandle);
                 if (impl != default(IMessageImpl))
                 {
-                    _server.MessageHandler.Handle(client, msg, impl, _server);
+                    _server.InternMsgServer.MessageHandler.Handle(client, msg, impl, _server);
                     //HandleGlobalMessageSendAsync(client, msg);
                 }
             }

@@ -10,7 +10,7 @@ namespace TaskServer
 {
     public class UserMessageImpl : IMessageImpl
     {
-        TaskServer _server = null;
+        CliServLib.DefaultImpl.TaskServer _server = null;
 
         public bool PerformAction(Client client, MessageData messageData)
         {
@@ -31,7 +31,7 @@ namespace TaskServer
 
         public void SetActionData(object data)
         {
-            _server = data as TaskServer;
+            _server = data as CliServLib.DefaultImpl.TaskServer;
         }
 
         private async void HandleUserMessageSendAsync(Client client, MessageData messageData)
@@ -54,7 +54,7 @@ namespace TaskServer
                 {
                     try
                     {
-                        if (!_server.ClientHandleToUserName.ContainsValue(name))
+                        if (!_server.InternMsgServer.ClientHandleToUserName.ContainsValue(name))
                         {
                             string msg = String.Format("This name [{0}] is not registered", name);
                             Console.WriteLine(msg);
@@ -66,13 +66,13 @@ namespace TaskServer
                             send.message = msg;
                             send.name = messageData.name;
                             send.response = true;
-                            var res = TaskServer.SendMessageAsync(client, send);
+                            var res = MessageServer.SendMessageAsync(client, send);
                             if (res.Result.Failure)
                             {
                                 Console.WriteLine("There is a problem sending data out to specific user.");
                             }
                         }
-                        var myKey = _server.ClientHandleToUserName.FirstOrDefault(x => x.Value == name).Key;
+                        var myKey = _server.InternMsgServer.ClientHandleToUserName.FirstOrDefault(x => x.Value == name).Key;
                         Client found = ClientStore.FindClient(myKey);
                         if (found != null)
                         {
@@ -82,7 +82,7 @@ namespace TaskServer
                             sendMsg.message = String.Format("[{0}] says \'{1}\'", messageData.name, message);
                             sendMsg.name = name;
                             sendMsg.response = false;
-                            var res = TaskServer.SendMessageAsync(found, sendMsg);
+                            var res = MessageServer.SendMessageAsync(found, sendMsg);
                             if (res.Result.Failure)
                             {
                                 Console.WriteLine("There is a problem sending data out to specific user.");

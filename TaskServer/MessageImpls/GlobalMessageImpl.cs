@@ -10,7 +10,7 @@ namespace TaskServer
 {
     public class GlobalMessageImpl : IMessageImpl
     {
-        TaskServer _server;
+        CliServLib.DefaultImpl.TaskServer _server;
 
         public bool PerformAction(Client client, MessageData messageData)
         {
@@ -33,7 +33,7 @@ namespace TaskServer
 
         public void SetActionData(object data)
         {
-            _server = data as TaskServer;
+            _server = data as CliServLib.DefaultImpl.TaskServer;
         }
 
         private async void HandleGlobalMessageSendAsync(Client client, MessageData messageData)
@@ -50,7 +50,7 @@ namespace TaskServer
                     {
                         continue;
                     }
-                    var res = TaskServer.SendMessageAsync(curClient, messageData);
+                    var res = CliServLib.MessageServer.SendMessageAsync(curClient, messageData);
                     if (res.Result.Failure)
                     {
                         Console.WriteLine("There is a problem sending data out to the client.");
