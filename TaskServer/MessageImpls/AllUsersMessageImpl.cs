@@ -10,7 +10,7 @@ namespace TaskServer
 {
     public class AllUsersMessageImpl : IMessageImpl
     {
-        CliServLib.DefaultImpl.TaskServer _server = null;
+        MessageServer _server = null;
 
         public bool PerformAction(Client client, MessageData messageData)
         {
@@ -31,7 +31,7 @@ namespace TaskServer
 
         public void SetActionData(object data)
         {
-            _server = data as CliServLib.DefaultImpl.TaskServer;
+            _server = data as MessageServer;
         }
 
         private async void GetAllUsersAsync(Client client, MessageData messageData)
@@ -48,9 +48,16 @@ namespace TaskServer
                 sendMsg.response = false;
                 StringBuilder buffer = new StringBuilder();
                 buffer.AppendLine("Users:");
-                foreach (var item in _server.InternMsgServer.ClientHandleToUserName)
+                foreach (var item in _server.ClientHandleToUserName)
                 {
-                    buffer.AppendFormat("[{0}] ", item.Value);
+                    if (item.Key == client.ClientHandle)
+                    {
+                        buffer.AppendFormat("[{0}*] ", item.Value);
+                    }
+                    else
+                    {
+                        buffer.AppendFormat("[{0}] ", item.Value);
+                    }
                 }
                 sendMsg.message = buffer.ToString();
 

@@ -10,7 +10,7 @@ namespace TaskServer
 {
     public class UserMessageImpl : IMessageImpl
     {
-        CliServLib.DefaultImpl.TaskServer _server = null;
+        MessageServer _server = null;
 
         public bool PerformAction(Client client, MessageData messageData)
         {
@@ -31,7 +31,7 @@ namespace TaskServer
 
         public void SetActionData(object data)
         {
-            _server = data as CliServLib.DefaultImpl.TaskServer;
+            _server = data as MessageServer;
         }
 
         private async void HandleUserMessageSendAsync(Client client, MessageData messageData)
@@ -54,7 +54,7 @@ namespace TaskServer
                 {
                     try
                     {
-                        if (!_server.InternMsgServer.ClientHandleToUserName.ContainsValue(name))
+                        if (!_server.ClientHandleToUserName.ContainsValue(name))
                         {
                             string msg = String.Format("This name [{0}] is not registered", name);
                             Console.WriteLine(msg);
@@ -72,7 +72,7 @@ namespace TaskServer
                                 Console.WriteLine("There is a problem sending data out to specific user.");
                             }
                         }
-                        var myKey = _server.InternMsgServer.ClientHandleToUserName.FirstOrDefault(x => x.Value == name).Key;
+                        var myKey = _server.ClientHandleToUserName.FirstOrDefault(x => x.Value == name).Key;
                         Client found = ClientStore.FindClient(myKey);
                         if (found != null)
                         {

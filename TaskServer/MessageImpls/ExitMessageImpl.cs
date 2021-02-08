@@ -10,7 +10,7 @@ namespace TaskServer
 {
     public class ExitMessageImpl : IMessageImpl
     {
-        CliServLib.DefaultImpl.TaskServer _server = null;
+        MessageServer _server = null;
 
         public bool PerformAction(Client client, MessageData messageData)
         {
@@ -32,7 +32,7 @@ namespace TaskServer
 
         public void SetActionData(object data)
         {
-            _server = data as CliServLib.DefaultImpl.TaskServer;
+            _server = data as MessageServer;
         }
 
         private bool HandleClientExit(Client client, MessageData messageData)
@@ -49,12 +49,12 @@ namespace TaskServer
                 IMessageImpl impl = MessageImplFactory.Instance().MakeMessageImpl((int)MessageImplFactory.MessageFactoryTypesEnum.GLOBAL_MSG_TYPE, client.ClientHandle);
                 if (impl != default(IMessageImpl))
                 {
-                    handleExit = _server.InternMsgServer.MessageHandler.Handle(client, msg, impl, _server);
+                    handleExit = _server.MessageHandler.Handle(client, msg, impl, _server);
                 }
                 if (handleExit)
                 {
                     // Remove client handle record keeping
-                    var remHandle = _server.InternMsgServer.ClientHandleToUserName.Remove(client.ClientHandle);
+                    var remHandle = _server.ClientHandleToUserName.Remove(client.ClientHandle);
                     // Remove the client impls
                     var remImpl = MessageImplFactory.Instance().RemoveClient(client.ClientHandle);
                     // Remove the client object

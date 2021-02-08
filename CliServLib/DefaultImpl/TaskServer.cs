@@ -35,8 +35,8 @@ namespace CliServLib.DefaultImpl
 
         public MessageServer InternMsgServer
         {
-            get;
-            private set;
+            get { return msgServer; }
+            private set { msgServer = value; }
         }
 
         public bool ClientsAllDone()

@@ -10,7 +10,7 @@ namespace TaskServer
 {
     public class GlobalMessageImpl : IMessageImpl
     {
-        CliServLib.DefaultImpl.TaskServer _server;
+        MessageServer _server;
 
         public bool PerformAction(Client client, MessageData messageData)
         {
@@ -33,7 +33,7 @@ namespace TaskServer
 
         public void SetActionData(object data)
         {
-            _server = data as CliServLib.DefaultImpl.TaskServer;
+            _server = data as MessageServer;
         }
 
         private async void HandleGlobalMessageSendAsync(Client client, MessageData messageData)

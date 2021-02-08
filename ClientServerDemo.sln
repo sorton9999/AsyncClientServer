@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30717.126
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncServer", "AsyncServer\AsyncServer.csproj", "{6795B74B-89C4-4CBE-A0A0-CEEC2C9A2812}"
 EndProject
@@ -10,6 +10,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TcpLib", "TcpLib\TcpLib.csproj", "{32C9300F-B915-4ABB-AC59-332EDE767F01}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskSocketDemo", "TaskSocketDemo\TaskSocketDemo.csproj", "{3570BA8F-3909-4E16-9BF1-5243EB2D1583}"
+	ProjectSection(ProjectDependencies) = postProject
+		{32C9300F-B915-4ABB-AC59-332EDE767F01} = {32C9300F-B915-4ABB-AC59-332EDE767F01}
+		{A6C36C44-694E-4F46-8E58-ED6D2737A346} = {A6C36C44-694E-4F46-8E58-ED6D2737A346}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskServer", "TaskServer\TaskServer.csproj", "{770396C4-3A54-43F0-98F3-89465719C723}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -29,6 +33,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CliServLib", "CliServLib\Cl
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskCommon", "TaskCommon\TaskCommon.csproj", "{1F69DBF9-7816-4F2E-915C-0AE944C9CED3}"
+	ProjectSection(ProjectDependencies) = postProject
+		{32C9300F-B915-4ABB-AC59-332EDE767F01} = {32C9300F-B915-4ABB-AC59-332EDE767F01}
+		{A6C36C44-694E-4F46-8E58-ED6D2737A346} = {A6C36C44-694E-4F46-8E58-ED6D2737A346}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
