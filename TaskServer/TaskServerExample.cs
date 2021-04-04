@@ -73,7 +73,7 @@ namespace TaskServer
         async Task<Result<Socket>> AcceptConnectionTask()
         {
             Console.WriteLine("Wating to Accept Connection from a Client...");
-            return await _listenSocket.AcceptAsync().ConfigureAwait(false);
+            return await _listenSocket.TaskAcceptAsync().ConfigureAwait(false);
         }
 
         async Task<Result<string>> ReceiveMessageAsync()

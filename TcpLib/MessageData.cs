@@ -15,5 +15,6 @@ namespace TcpLib
         public string name = String.Empty;
         public bool response = false;
         public object message = null;
+        public bool exitCmd = false;
     }
 }

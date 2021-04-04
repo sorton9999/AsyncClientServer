@@ -72,9 +72,12 @@ namespace CliServLib
             bool retVal = false;
             foreach (var client in clientStore.ToList())
             {
-                client.Value.Stop();
-                //client.Value.Dispose();
-                clientStore.Remove(client.Key);
+                if (client.Value != null)
+                {
+                    client.Value.Stop();
+                    //client.Value.Dispose();
+                    clientStore.Remove(client.Key);
+                }
             }
             if (clientStore.Count == 0)
             {

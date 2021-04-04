@@ -101,6 +101,7 @@ namespace CliServLib
             {
                 ClientSocket.Shutdown(SocketShutdown.Both);
                 ClientSocket.Close();
+                State = ClientState.DISCONNECTED;
             }
         }
 

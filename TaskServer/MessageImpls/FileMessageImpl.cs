@@ -5,14 +5,13 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using TaskCommon;
 using TcpLib;
 
 namespace TaskServer
 {
     public class FileMessageImpl : IMessageImpl
     {
-        private TaskServer _server = null;
+        private MessageServer _server = null;
 
         private bool receivingFile = false;
 
@@ -145,7 +144,7 @@ namespace TaskServer
 
         public void SetActionData(object data)
         {
-            _server = data as TaskServer;
+            _server = data as MessageServer;
         }
 
     }

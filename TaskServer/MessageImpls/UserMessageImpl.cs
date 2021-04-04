@@ -4,14 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using TaskCommon;
 using TcpLib;
 
 namespace TaskServer
 {
     public class UserMessageImpl : IMessageImpl
     {
-        TaskServer _server = null;
+        MessageServer _server = null;
 
         public bool PerformAction(Client client, MessageData messageData)
         {
@@ -32,7 +31,7 @@ namespace TaskServer
 
         public void SetActionData(object data)
         {
-            _server = data as TaskServer;
+            _server = data as MessageServer;
         }
 
         private async void HandleUserMessageSendAsync(Client client, MessageData messageData)
@@ -67,7 +66,7 @@ namespace TaskServer
                             send.message = msg;
                             send.name = messageData.name;
                             send.response = true;
-                            var res = TaskServer.SendMessageAsync(client, send);
+                            var res = MessageServer.SendMessageAsync(client, send);
                             if (res.Result.Failure)
                             {
                                 Console.WriteLine("There is a problem sending data out to specific user.");
@@ -83,7 +82,7 @@ namespace TaskServer
                             sendMsg.message = String.Format("[{0}] says \'{1}\'", messageData.name, message);
                             sendMsg.name = name;
                             sendMsg.response = false;
-                            var res = TaskServer.SendMessageAsync(found, sendMsg);
+                            var res = MessageServer.SendMessageAsync(found, sendMsg);
                             if (res.Result.Failure)
                             {
                                 Console.WriteLine("There is a problem sending data out to specific user.");

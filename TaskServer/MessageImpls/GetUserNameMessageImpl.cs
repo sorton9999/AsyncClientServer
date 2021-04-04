@@ -4,14 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using TaskCommon;
 using TcpLib;
 
 namespace TaskServer
 {
     public class GetUserNameMessageImpl : IMessageImpl
     {
-        TaskServer _server = null;
+        MessageServer _server = null;
 
         public bool PerformAction(Client client, MessageData messageData)
         {
@@ -32,7 +31,7 @@ namespace TaskServer
 
         public void SetActionData(object data)
         {
-            _server = data as TaskServer;
+            _server = data as MessageServer;
         }
 
         private void HandleGetUserName(Client client, MessageData messageData)
@@ -50,7 +49,7 @@ namespace TaskServer
                 msg.name = messageData.name;
                 msg.response = false;
                 msg.message = String.Format("[{0}] has joined and says \'{1}\'.", messageData.name, messageData.message);
-                IMessageImpl impl = MessageImplFactory.Instance().MakeMessageImpl(MessageTypesEnum.GLOBAL_MSG_TYPE, client.ClientHandle);
+                IMessageImpl impl = MessageImplFactory.Instance().MakeMessageImpl((int)MessageImplFactory.MessageFactoryTypesEnum.GLOBAL_MSG_TYPE, client.ClientHandle);
                 if (impl != default(IMessageImpl))
                 {
                     _server.MessageHandler.Handle(client, msg, impl, _server);

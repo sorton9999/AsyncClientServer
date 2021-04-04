@@ -1,25 +1,17 @@
-﻿using CliServLib;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Sockets;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using TcpLib;
-using TaskCommon;
+using System.ComponentModel;
 
-
-namespace TaskServer
+namespace CliServLib
 {
-
-    public class TaskServer
+    public class MessageServer
     {
         // Listener
-        private readonly CliServLib.ThreadedListener listenerThread = new CliServLib.ThreadedListener();
+        private readonly CliServLib.ThreadedListener listenerThread = null;
 
         // Store User Names associated with its client handle
         private readonly Dictionary<long, string> clientHandleToUserName = new Dictionary<long, string>();
@@ -30,13 +22,18 @@ namespace TaskServer
         // Are we done?
         bool done = false;
 
+        // Flag to indicate listen on localhost
+        bool useLocalhost = false;
+
         // The message handler object used to perform actions using Impl objects
         private MessageHandler messageHandler = new MessageHandler();
 
 
-        public TaskServer()
+        public MessageServer(bool localhost)
         {
+            useLocalhost = localhost;
             AllClientsRemoved = false;
+            listenerThread = new CliServLib.ThreadedListener(useLocalhost);
             ThreadedReceiver.ServerDataReceived += ThreadedReceiver_ServerDataReceived;
             listenerThread.OnClientConnect += ListenerThread_OnClientConnect;
             clients = new CliServLib.ClientStore();
@@ -47,6 +44,12 @@ namespace TaskServer
         {
             get;
             private set;
+        }
+
+        public IMessageImplFactory MessageFactory
+        {
+            get;
+            set;
         }
 
         public Dictionary<long, string> ClientHandleToUserName
@@ -85,12 +88,9 @@ namespace TaskServer
                             Console.WriteLine("[{0}]: {1} ", messageData.name, ((messageData.message is string) ? messageData.message : ((messageData.message as byte[]).Length + " bytes")));
                         }
 
-                        MessageTypesEnum msgType;
-                        bool success = Enum.TryParse(messageData.id.ToString(), out msgType);
-
-                        if (success)
+                        if (MessageFactory != null)
                         {
-                            IMessageImpl msgImpl = MessageImplFactory.Instance().MakeMessageImpl(msgType, client.ClientHandle);
+                            IMessageImpl msgImpl = MessageFactory.MakeMessageImpl(messageData.id, client.ClientHandle);
 
                             if (msgImpl != default(IMessageImpl))
                             {

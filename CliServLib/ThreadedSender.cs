@@ -49,7 +49,8 @@ namespace CliServLib
 
                         if (eventData != null)
                         {
-                            if ((eventData.Result.id > 0) && (eventData.Result.message != null))
+                            //if ((eventData.Result != null) && (eventData.Result.id > 0) && (eventData.Result.message != null))
+                            if (eventData.Result != null)
                             {
                                 byte[] buffer = ClientData<MessageData>.SerializeToByteArray<MessageData>(eventData.Result);
                                 var res = TcpLibExtensions.SendBufferAsync(client.ClientSocket, buffer, 0, buffer.Length, SocketFlags.None, client.CancelSource.Token);
@@ -57,7 +58,13 @@ namespace CliServLib
                                 {
                                     // Just close the socket.  Look into trying to reconnect
                                     Console.WriteLine("Send Fault. Closing socket {0} to client.", client.ClientSocket.Handle);
+                                    //ClientStore.RemoveClient((long)client.ClientSocket.Handle);
+                                }
+                                else if (eventData.Result.exitCmd)
+                                {
+                                    Console.WriteLine("Exit Command Received");
                                     ClientStore.RemoveClient((long)client.ClientSocket.Handle);
+                                    client.Stop();
                                 }
                                 else
                                 {
@@ -66,7 +73,10 @@ namespace CliServLib
                                     client.ClearData();
                                 }
                             }
-
+                            else
+                            {
+                                Console.WriteLine("Client: {0} -- NULL Message Result", client.ClientHandle);
+                            }
                         }
                     }
                     catch (TaskCanceledException tc)

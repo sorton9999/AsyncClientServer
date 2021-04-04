@@ -4,14 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using TaskCommon;
 using TcpLib;
 
 namespace TaskServer
 {
     public class AllUsersMessageImpl : IMessageImpl
     {
-        TaskServer _server = null;
+        MessageServer _server = null;
 
         public bool PerformAction(Client client, MessageData messageData)
         {
@@ -32,7 +31,7 @@ namespace TaskServer
 
         public void SetActionData(object data)
         {
-            _server = data as TaskServer;
+            _server = data as MessageServer;
         }
 
         private async void GetAllUsersAsync(Client client, MessageData messageData)
@@ -51,11 +50,18 @@ namespace TaskServer
                 buffer.AppendLine("Users:");
                 foreach (var item in _server.ClientHandleToUserName)
                 {
-                    buffer.AppendFormat("[{0}] ", item.Value);
+                    if (item.Key == client.ClientHandle)
+                    {
+                        buffer.AppendFormat("[{0}*] ", item.Value);
+                    }
+                    else
+                    {
+                        buffer.AppendFormat("[{0}] ", item.Value);
+                    }
                 }
                 sendMsg.message = buffer.ToString();
 
-                var res = TaskServer.SendMessageAsync(client, sendMsg);
+                var res = CliServLib.MessageServer.SendMessageAsync(client, sendMsg);
                 if (res.Result.Failure)
                 {
                     Console.WriteLine("There is a problem sending data out to specific user.");
