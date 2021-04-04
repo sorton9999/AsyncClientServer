@@ -26,7 +26,7 @@ namespace TaskServer
         /// <summary>
         /// Lock object
         /// </summary>
-        private object lockObj = new object();
+        private readonly object lockObj = new object();
 
         /// <summary>
         /// The holder of this object instance following the singleton pattern.
@@ -74,10 +74,9 @@ namespace TaskServer
         /// <returns>IMessageImpl</returns>
         public IMessageImpl MakeMessageImpl(int msgType, long clientHandle)
         {
-            IMessageImpl impl = default(IMessageImpl);
-            MessageFactoryTypesEnum msgFactoryType;
+            IMessageImpl impl = default;
 
-            bool success = Enum.TryParse(msgType.ToString(), out msgFactoryType);
+            bool success = Enum.TryParse(msgType.ToString(), out MessageFactoryTypesEnum msgFactoryType);
 
             Console.WriteLine("Getting IMPL for Client: {0}; TASK: {1}", clientHandle, msgType.ToString());
 
@@ -139,7 +138,7 @@ namespace TaskServer
             catch (Exception e)
             {
                 Console.WriteLine("ImplFactory Exception: " + e.Message);
-                impl = default(IMessageImpl);
+                impl = default;
             }
             return impl;
         }
@@ -155,7 +154,7 @@ namespace TaskServer
             {
                 return MakeImpls[type].Invoke();
             }
-            return default(IMessageImpl);
+            return default;
         }
 
         #endregion
@@ -225,7 +224,7 @@ namespace TaskServer
 
         IMessageImpl MakeUninitializeMessage()
         {
-            return default(IMessageImpl);
+            return default;
         }
 
         #endregion
