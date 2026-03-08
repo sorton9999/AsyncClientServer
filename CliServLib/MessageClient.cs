@@ -91,9 +91,10 @@ namespace CliServLib
             private set;
         }
 
-        public void SetDataGetter(IDataGetter getter)
+        public IDataGetter SetDataGetter
         {
-            MyClient.DataGetter = getter;
+            get { return MyClient.DataGetter; }
+            set { MyClient.DataGetter = value; }
         }
 
         private async void ReceiveHandler(object obj)

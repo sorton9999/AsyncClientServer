@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -78,9 +79,10 @@ namespace CliServLib
             private set { sender = value; }
         }
 
-        public void SetClient(ClientData<T> newClient)
+        public ClientData<T> SetClient
         {
-            clientData = newClient;
+            get { return clientData; }
+            set { clientData = value; }
         }
 
         public void StartController(object obj)
@@ -105,7 +107,7 @@ namespace CliServLib
             catch (Exception e)
             {
                 retVal = false;
-                Console.WriteLine("Stopping Client Exception: ", e.Message);
+                Console.WriteLine("Stopping Client Exception: {0}", e.Message);
             }
             return retVal;
         }

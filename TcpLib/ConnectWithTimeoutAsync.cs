@@ -49,7 +49,10 @@ namespace TcpLib
                         }
                     }
                     // We're connected here.  Break out of loop and send OK.
-                    break;
+                    if (cycles > MaxCycles)
+                    {
+                        break;
+                    }
                 }
                 catch (SocketException ex)
                 {

@@ -47,7 +47,10 @@ namespace TcpLib
                     }
                     // we sent so break out of loop and return OK
                     msgSent = true;
-                    break;
+                    if (cycles > MaxCycles)
+                    {
+                        break;
+                    }
                 }
                 catch (SocketException ex)
                 {

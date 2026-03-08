@@ -61,7 +61,10 @@ namespace TcpLib
                         }
                     }
                     msgRecv = true;
-                    break;
+                    if (cycles > MaxCycles)
+                    {
+                        break;
+                    }
                 }
                 catch (SocketException ex)
                 {

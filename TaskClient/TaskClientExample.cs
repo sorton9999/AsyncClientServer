@@ -20,7 +20,7 @@ namespace TaskClient
         const int STD_INPUT_HANDLE = -10;
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        internal static extern IntPtr GetStdHandle(int nStdHandle);
+        internal static extern IntPtr GetStdHandle(int nStdHandle); // parasoft-suppress CMUG.MU.VALRETURN "Unchangeable internal method"
 
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern bool CancelIoEx(IntPtr handle, IntPtr lpOverlapped);
@@ -475,35 +475,42 @@ namespace TaskClient
         {
             // Throw up a file chooser dialog in its own thread
             string selectedPath = String.Empty;
-            var t = new Thread((ThreadStart)(() =>
+            try
             {
-                // Create a form to use as the owner of the dialog.
-                // Position it in the center of the screen.
-                using (var owner = new Form()
+                var t = new Thread((ThreadStart)(() =>
                 {
-                    Width = 0,
-                    Height = 0,
-                    StartPosition = FormStartPosition.CenterScreen,
-                    Text = "Browse for Folder"
-                })
-                {
-                    owner.Show();
-                    owner.BringToFront();
-                    OpenFileDialog ofd = new OpenFileDialog
+                    // Create a form to use as the owner of the dialog.
+                    // Position it in the center of the screen.
+                    using (var owner = new Form()
                     {
-                        InitialDirectory = ".",
-                        Title = "Select a File"
-                    };
-                    if (ofd.ShowDialog(owner) == DialogResult.OK)
+                        Width = 0,
+                        Height = 0,
+                        StartPosition = FormStartPosition.CenterScreen,
+                        Text = "Browse for Folder"
+                    })
                     {
-                        selectedPath = ofd.FileName;
+                        owner.Show();
+                        owner.BringToFront();
+                        OpenFileDialog ofd = new OpenFileDialog
+                        {
+                            InitialDirectory = ".",
+                            Title = "Select a File"
+                        };
+                        if (ofd.ShowDialog(owner) == DialogResult.OK)
+                        {
+                            selectedPath = ofd.FileName;
+                        }
                     }
-                }
-            }));
-            t.SetApartmentState(ApartmentState.STA);
-            t.Start();
+                }));
+                t.SetApartmentState(ApartmentState.STA);
+                t.Start();
 
-            t.Join();
+                t.Join();
+            }
+            catch (Exception e)
+            {
+                System.Diagnostics.Debug.WriteLine("ShowFileDialog Exception: " + e.Message);
+            }
             return selectedPath;
         }
 

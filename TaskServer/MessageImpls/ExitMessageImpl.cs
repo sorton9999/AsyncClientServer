@@ -49,7 +49,7 @@ namespace TaskServer
                 IMessageImpl impl = MessageImplFactory.Instance().MakeMessageImpl((int)MessageImplFactory.MessageFactoryTypesEnum.GLOBAL_MSG_TYPE, client.ClientHandle);
                 if (impl != default(IMessageImpl))
                 {
-                    handleExit = _server.MessageHandler.Handle(client, msg, impl, _server);
+                    handleExit = _server.ServerMessageHandler.Handle(client, msg, impl, _server);
                 }
                 if (handleExit)
                 {

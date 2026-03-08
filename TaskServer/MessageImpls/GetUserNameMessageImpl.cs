@@ -52,7 +52,7 @@ namespace TaskServer
                 IMessageImpl impl = MessageImplFactory.Instance().MakeMessageImpl((int)MessageImplFactory.MessageFactoryTypesEnum.GLOBAL_MSG_TYPE, client.ClientHandle);
                 if (impl != default(IMessageImpl))
                 {
-                    _server.MessageHandler.Handle(client, msg, impl, _server);
+                    _server.ServerMessageHandler.Handle(client, msg, impl, _server);
                     //HandleGlobalMessageSendAsync(client, msg);
                 }
             }

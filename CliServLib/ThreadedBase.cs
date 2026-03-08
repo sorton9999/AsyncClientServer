@@ -57,13 +57,20 @@ namespace CliServLib
         //}
         public object Start(object obj)
         {
-            theThread = new Thread(() =>
+            try
             {
-                if (looper != null)
+                theThread = new Thread(() =>
                 {
-                    response = looper.LoopFunc(obj);
-                }
-            });
+                    if (looper != null)
+                    {
+                        response = looper.LoopFunc(obj);
+                    }
+                });
+            }
+            catch (Exception e)
+            {
+                System.Diagnostics.Debug.WriteLine("Looper Start Exception: " + e.ToString());
+            }
             return response;
         }
 

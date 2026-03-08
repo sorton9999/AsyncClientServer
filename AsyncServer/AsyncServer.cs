@@ -52,37 +52,39 @@ namespace AsyncServer
             IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 11000);
 
             // Create a TCP/IP socket.  
-            Socket listener = new Socket(ipAddress.AddressFamily,
-                SocketType.Stream, ProtocolType.Tcp);
-
-            // Bind the socket to the local endpoint and listen for incoming connections.  
-            try
+            using (Socket listener = new Socket(ipAddress.AddressFamily,
+                SocketType.Stream, ProtocolType.Tcp))
             {
-                listener.Bind(localEndPoint);
-                listener.Listen(100);
 
-                sendThread = new Thread(SendLoop);
-                recvThread = new Thread(RecvLoop);
-
-                while (!done)
+                // Bind the socket to the local endpoint and listen for incoming connections.  
+                try
                 {
-                    // Set the event to nonsignaled state.  
-                    allDone.Reset();
+                    listener.Bind(localEndPoint);
+                    listener.Listen(100);
 
-                    // Start an asynchronous socket to listen for connections.  
-                    Console.WriteLine("Waiting for a connection...");
-                    listener.BeginAccept(
-                        new AsyncCallback(AcceptCallback),
-                        listener);
+                    sendThread = new Thread(SendLoop);
+                    recvThread = new Thread(RecvLoop);
 
-                    // Wait until a connection is made before continuing.  
-                    allDone.WaitOne();
+                    while (!done)
+                    {
+                        // Set the event to nonsignaled state.  
+                        allDone.Reset();
+
+                        // Start an asynchronous socket to listen for connections.  
+                        Console.WriteLine("Waiting for a connection...");
+                        listener.BeginAccept(
+                            new AsyncCallback(AcceptCallback),
+                            listener);
+
+                        // Wait until a connection is made before continuing.  
+                        allDone.WaitOne();
+                    }
+
                 }
-
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.ToString());
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                }
             }
 
             Console.WriteLine("\nPress ENTER to continue...");

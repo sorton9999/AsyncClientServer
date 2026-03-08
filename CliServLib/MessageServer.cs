@@ -57,7 +57,7 @@ namespace CliServLib
             get { return clientHandleToUserName; }
         }
 
-        public MessageHandler MessageHandler
+        public MessageHandler ServerMessageHandler
         {
             get { return messageHandler; }
             private set { messageHandler = value; }

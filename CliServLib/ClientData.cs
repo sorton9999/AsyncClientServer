@@ -17,7 +17,7 @@ namespace CliServLib
         {
             FAULTED = -99,
             UNINIT = -1,
-            CONNECTED,
+            CONNECTED = 0,
             DISCONNECTED,
             EXITING
         }
